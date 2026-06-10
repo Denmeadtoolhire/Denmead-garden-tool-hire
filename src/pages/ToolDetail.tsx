@@ -164,7 +164,7 @@ const ToolDetailPage = () => {
               <img
                 src={tool.image_url}
                 alt={tool.name}
-                className="w-full h-48 object-cover rounded-xl mb-4"
+                className="w-full h-48 object-contain bg-white p-3 rounded-xl mb-4 border border-gray-100"
               />
             ) : (
               <div className="w-full h-48 bg-gradient-to-br from-brand-green to-brand-green-light rounded-xl flex items-center justify-center mb-4">

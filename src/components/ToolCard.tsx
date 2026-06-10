@@ -15,7 +15,7 @@ const ToolCard = ({ tool, categoryName }: ToolCardProps) => {
         <img
           src={tool.image_url}
           alt={tool.name}
-          className="w-full h-48 object-cover"
+          className="w-full h-48 object-contain bg-white p-3"
         />
       ) : (
         <div className="w-full h-48 bg-gradient-to-br from-brand-green to-brand-green-light flex items-center justify-center">
