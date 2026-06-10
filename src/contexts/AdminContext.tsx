@@ -30,7 +30,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     // If no hash set, use default "admin123"
     if (!hash) {
       // default password hash for "admin123"
-      hash = '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+      hash = '$2a$10$kHfypn3LdE4QGV1HE9jPyOeT.Cq/bRc2YnpRgCdyb.vZrG9FzyBxK';
     }
 
     const valid = await bcrypt.compare(password, hash);
