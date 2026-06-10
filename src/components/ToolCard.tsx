@@ -33,7 +33,7 @@ const ToolCard = ({ tool, categoryName }: ToolCardProps) => {
         <h3 className="text-lg font-bold text-gray-900 mt-2 mb-1">{tool.name}</h3>
 
         {tool.description && (
-          <p className="text-gray-600 text-sm mb-3 line-clamp-2">{tool.description}</p>
+          <p className="text-gray-600 text-sm mb-3">{tool.description}</p>
         )}
 
         <div className="flex gap-3 mb-4">
