@@ -7,7 +7,8 @@
  * server-side. For now they work via direct Resend API calls from the browser.
  */
 
-import type { Booking, Tool } from './supabase';
+import type { Booking, Tool, Settings } from './supabase';
+import { supabase } from './supabase';
 import { format, parseISO } from 'date-fns';
 
 const FROM_ADDRESS = 'Denmead Tool Hire <denmeadtoolhire@gmail.com>';
@@ -22,6 +23,20 @@ function getResendKey(): string | null {
     return null;
   }
   return key;
+}
+
+async function getSettings(): Promise<Settings | null> {
+  try {
+    const { data } = await supabase
+      .from('settings')
+      .select('*')
+      .eq('id', 1)
+      .single();
+    return data as Settings;
+  } catch (err) {
+    console.error('Failed to fetch settings:', err);
+    return null;
+  }
 }
 
 async function sendEmail(apiKey: string, payload: object): Promise<void> {
@@ -98,19 +113,23 @@ export async function sendRequestReceivedEmail(booking: Booking, tool: Tool): Pr
   const key = getResendKey();
   if (!key) return;
 
+  const settings = await getSettings();
+  const subject = settings?.request_received_email_subject || 'Booking Request Received - Denmead Tool Hire';
+  const bodyText = settings?.request_received_email_body || 'Thank you for your booking request! We have received your request and will review it shortly. You will receive an email confirmation once we have approved your booking.';
+
   const html = `
     ${baseHeader('Booking Request Received!')}
     <p>Hi ${booking.customer_name},</p>
-    <p>Thank you for your enquiry! We've received your request to hire the <strong>${tool.name}</strong> and we'll be in touch shortly to confirm your booking.</p>
+    <p>${bodyText}</p>
     ${bookingTable(booking, tool.name)}
-    <p>We aim to respond within a few hours during business hours. If you need to get in touch urgently, please call us on <strong>${PHONE}</strong>.</p>
+    <p>If you need to get in touch urgently, please call us on <strong>${PHONE}</strong>.</p>
     ${baseFooter()}
   `;
 
   await sendEmail(key, {
     from: FROM_ADDRESS,
     to: [booking.customer_email],
-    subject: 'Booking Request Received - Denmead Tool Hire',
+    subject,
     html,
   });
 }
@@ -122,10 +141,14 @@ export async function sendApprovalEmail(booking: Booking, tool: Tool): Promise<v
   const key = getResendKey();
   if (!key) return;
 
+  const settings = await getSettings();
+  const subject = settings?.confirmation_email_subject || 'Your Booking is Confirmed - Denmead Tool Hire';
+  const bodyText = settings?.confirmation_email_body || 'Great news! Your booking has been confirmed. Please collect your tool at the time specified. We accept cash or card payment on collection.';
+
   const html = `
     ${baseHeader('Booking Confirmed!')}
     <p>Hi ${booking.customer_name},</p>
-    <p>Great news — your booking has been confirmed! We look forward to seeing you.</p>
+    <p>${bodyText}</p>
     ${bookingTable(booking, tool.name)}
     <div style="background: #fff3cd; border: 1px solid #f5c518; border-radius: 8px; padding: 15px; margin: 20px 0;">
       <strong>Collection address:</strong><br>
