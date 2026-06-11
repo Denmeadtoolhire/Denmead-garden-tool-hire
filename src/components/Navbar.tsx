@@ -21,7 +21,7 @@ const Navbar = () => {
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-20">
           <Link to="/" className="flex items-center">
-            <img src={LOGO} alt="Denmead Tool & Garden Hire" className="h-14 w-auto object-contain" />
+            <img src={LOGO} alt="Denmead Tool & Garden Hire" className="h-14 w-auto object-contain rounded-xl" />
           </Link>
 
           {/* Desktop nav */}

@@ -106,7 +106,7 @@ const HomePage = () => {
           <img
             src={LOGO}
             alt="Denmead Tool & Garden Hire"
-            className="h-48 w-auto object-contain mx-auto mb-8 drop-shadow-lg"
+            className="h-48 w-auto object-contain mx-auto mb-8 drop-shadow-lg rounded-3xl"
           />
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-5 leading-tight tracking-tight">
             Hire the Tools You Need,
