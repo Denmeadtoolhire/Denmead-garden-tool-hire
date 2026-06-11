@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import type { Tool, Settings } from '@/lib/supabase';
 import BookingCalendar from '@/components/BookingCalendar';
 import { getAvailableSlotsFor4hr, isFullDayAvailable, setTimeOnDate } from '@/lib/availability';
-import { sendBookingConfirmationEmail } from '@/lib/email';
+import { sendRequestReceivedEmail, sendAdminNewRequestEmail } from '@/lib/email';
 import { format } from 'date-fns';
 import { Clock, Calendar, Package, CheckCircle, ArrowLeft } from 'lucide-react';
 
@@ -99,7 +99,7 @@ const ToolDetailPage = () => {
         start_time: startTime.toISOString(),
         end_time: endTime.toISOString(),
         notes: notes.trim() || null,
-        status: 'confirmed',
+        status: 'pending',
       })
       .select()
       .single();
@@ -110,8 +110,9 @@ const ToolDetailPage = () => {
       return;
     }
 
-    // Send email (non-blocking)
-    sendBookingConfirmationEmail(booking, tool, settings);
+    // Send emails (non-blocking)
+    sendRequestReceivedEmail(booking, tool);
+    sendAdminNewRequestEmail(booking, tool);
 
     navigate('/booking/confirmation', {
       state: {
@@ -444,16 +445,16 @@ const ToolDetailPage = () => {
                   className="w-full bg-brand-green text-white font-bold py-3 rounded-xl hover:bg-brand-green-dark transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
                 >
                   {submitting ? (
-                    'Booking...'
+                    'Submitting...'
                   ) : (
                     <>
                       <CheckCircle size={18} />
-                      Confirm Booking
+                      Submit Booking Request
                     </>
                   )}
                 </button>
                 <p className="text-xs text-gray-500 text-center mt-2">
-                  Payment is taken on collection. You'll receive a confirmation email.
+                  We'll review your request and be in touch to confirm. Payment is taken on collection.
                 </p>
               </div>
             )}

@@ -8,6 +8,7 @@ import HomePage from './pages/Home';
 import ToolsPage from './pages/Tools';
 import ToolDetailPage from './pages/ToolDetail';
 import BookingConfirmationPage from './pages/BookingConfirmation';
+import BookingRespondPage from './pages/BookingRespond';
 import AdminLogin from './pages/admin/AdminLogin';
 import Dashboard from './pages/admin/Dashboard';
 import ManageTools from './pages/admin/ManageTools';
@@ -65,6 +66,14 @@ function App() {
             element={
               <PublicLayout>
                 <BookingConfirmationPage />
+              </PublicLayout>
+            }
+          />
+          <Route
+            path="/booking/respond"
+            element={
+              <PublicLayout>
+                <BookingRespondPage />
               </PublicLayout>
             }
           />

@@ -34,9 +34,13 @@ export type Booking = {
   hire_type: '4hr' | '1day';
   start_time: string;
   end_time: string;
-  status: 'confirmed' | 'cancelled';
+  status: 'pending' | 'approved' | 'alternative_suggested' | 'cancelled';
   notes: string | null;
   created_at: string;
+  suggested_start_time: string | null;
+  suggested_end_time: string | null;
+  response_token: string | null;
+  admin_notes: string | null;
   tools?: Tool;
 };
 
