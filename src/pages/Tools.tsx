@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Tool, Category } from '@/lib/supabase';
 import ToolCard from '@/components/ToolCard';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal, Package } from 'lucide-react';
 
 type ToolWithCategory = Tool & { categories: Category | null };
 
@@ -42,55 +42,95 @@ const ToolsPage = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-brand-green text-white py-12">
-        <div className="max-w-6xl mx-auto px-4">
-          <h1 className="text-3xl font-bold mb-2">Hire Tools</h1>
-          <p className="text-green-200">Browse our full range and book online in minutes.</p>
+    <div className="min-h-screen bg-slate-50">
+      {/* Hero banner */}
+      <div className="bg-brand-green text-white py-16 relative overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              'repeating-linear-gradient(135deg, #fff 0px, #fff 1px, transparent 1px, transparent 12px)',
+          }}
+        />
+        <div className="relative max-w-6xl mx-auto px-4">
+          <h1 className="text-4xl font-extrabold mb-2 tracking-tight">Hire Our Tools</h1>
+          <p className="text-green-200 text-lg">
+            Browse our full range and book online in minutes.
+          </p>
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <div className="relative flex-1">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search tools..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-green"
-            />
-          </div>
-          <div className="relative">
-            <SlidersHorizontal
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-            <select
-              value={selectedCat}
-              onChange={(e) => setSelectedCat(e.target.value)}
-              className="pl-9 pr-8 py-2.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-green appearance-none"
-            >
-              <option value="">All Categories</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        {/* Search & filter card */}
+        <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 mb-8">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search tools..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-green text-sm"
+              />
+            </div>
+            <div className="relative">
+              <SlidersHorizontal
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <select
+                value={selectedCat}
+                onChange={(e) => setSelectedCat(e.target.value)}
+                className="pl-9 pr-8 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand-green appearance-none text-sm font-medium text-gray-700 min-w-[180px]"
+              >
+                <option value="">All Categories</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
 
+        {/* Results count */}
+        {!loading && (
+          <p className="text-sm text-gray-500 mb-6 font-medium">
+            {filtered.length === 0
+              ? 'No tools found'
+              : `Showing ${filtered.length} tool${filtered.length !== 1 ? 's' : ''}`}
+            {selectedCat && categories.find((c) => c.id === selectedCat)
+              ? ` in ${categories.find((c) => c.id === selectedCat)?.name}`
+              : ''}
+            {search ? ` matching "${search}"` : ''}
+          </p>
+        )}
+
         {/* Results */}
         {loading ? (
-          <div className="text-center py-20 text-gray-500">Loading tools...</div>
+          <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+            <div className="w-10 h-10 border-4 border-brand-green border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-sm font-medium">Loading tools...</p>
+          </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">
-            <p className="text-lg">No tools found.</p>
-            <p className="text-sm mt-1">Try clearing the search or category filter.</p>
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-5">
+              <Package size={36} className="text-gray-300" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-700 mb-2">No tools found</h3>
+            <p className="text-gray-400 text-sm max-w-sm">
+              Try clearing the search term or selecting a different category.
+            </p>
+            {(search || selectedCat) && (
+              <button
+                onClick={() => { setSearch(''); setSelectedCat(''); }}
+                className="mt-5 text-sm font-semibold text-brand-green hover:underline"
+              >
+                Clear all filters
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
