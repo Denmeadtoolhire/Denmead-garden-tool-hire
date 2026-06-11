@@ -9,6 +9,7 @@ import {
   LogOut,
   Menu,
   X,
+  Home,
 } from 'lucide-react';
 
 const navItems = [
@@ -42,6 +43,15 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       <nav className="flex-1 p-3">
+        <Link
+          to="/"
+          onClick={() => setSidebarOpen(false)}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg mb-3 transition-colors text-sm font-medium text-green-200 hover:bg-green-800 hover:text-white border-b border-green-700 pb-3"
+        >
+          <Home size={18} />
+          View Site
+        </Link>
+
         {navItems.map(({ to, label, icon: Icon }) => (
           <Link
             key={to}
