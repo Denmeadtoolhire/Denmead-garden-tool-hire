@@ -58,3 +58,23 @@ export type Settings = {
   confirmation_email_body: string;
   admin_password_hash: string | null;
 };
+
+export interface Customer {
+  id: string;
+  email: string;
+  name: string;
+  phone: string | null;
+  address: string | null;
+  marketing_opt_in: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BatchEmail {
+  id: string;
+  subject: string;
+  body: string;
+  recipient_count: number;
+  sent_at: string;
+  sent_by: string;
+}

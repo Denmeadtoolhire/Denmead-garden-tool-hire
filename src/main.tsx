@@ -14,6 +14,8 @@ import Dashboard from './pages/admin/Dashboard';
 import ManageTools from './pages/admin/ManageTools';
 import ManageBookings from './pages/admin/ManageBookings';
 import SettingsPage from './pages/admin/Settings';
+import CustomersPage from './pages/admin/Customers';
+import UnsubscribePage from './pages/admin/Unsubscribe';
 import './index.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -108,6 +110,22 @@ function App() {
               <ProtectedRoute>
                 <SettingsPage />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/customers"
+            element={
+              <ProtectedRoute>
+                <CustomersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/unsubscribe"
+            element={
+              <PublicLayout>
+                <UnsubscribePage />
+              </PublicLayout>
             }
           />
           <Route path="*" element={<Navigate to="/" replace />} />

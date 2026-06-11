@@ -36,6 +36,8 @@ const ToolDetailPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -77,50 +79,102 @@ const ToolDetailPage = () => {
     setSubmitting(true);
     setError('');
 
-    let startTime: Date;
-    let endTime: Date;
+    try {
+      // Step 1: Check if customer exists, create or update
+      const emailTrim = email.trim();
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('email', emailTrim)
+        .single();
 
-    if (hireType === '4hr' && selectedSlot) {
-      startTime = selectedSlot.start;
-      endTime = selectedSlot.end;
-    } else {
-      startTime = setTimeOnDate(selectedDate, settings.opening_time);
-      endTime = setTimeOnDate(selectedDate, settings.closing_time);
-    }
+      let customerId: string;
 
-    const { data: booking, error: bookingError } = await supabase
-      .from('bookings')
-      .insert({
-        tool_id: tool.id,
-        customer_name: name.trim(),
-        customer_email: email.trim(),
-        customer_phone: phone.trim(),
-        hire_type: hireType,
-        start_time: startTime.toISOString(),
-        end_time: endTime.toISOString(),
-        notes: notes.trim() || null,
-        status: 'pending',
-      })
-      .select()
-      .single();
+      if (existingCustomer) {
+        // Update existing customer with new address/phone if different
+        customerId = existingCustomer.id;
+        await supabase
+          .from('customers')
+          .update({
+            phone: phone.trim() || null,
+            address: address.trim() || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', customerId);
+      } else {
+        // Create new customer
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            email: emailTrim,
+            name: name.trim(),
+            phone: phone.trim() || null,
+            address: address.trim() || null,
+            marketing_opt_in: marketingOptIn,
+          })
+          .select()
+          .single();
 
-    if (bookingError || !booking) {
-      setError('Failed to create booking. Please try again.');
+        if (customerError || !newCustomer) {
+          setError('Failed to create customer record. Please try again.');
+          setSubmitting(false);
+          return;
+        }
+
+        customerId = newCustomer.id;
+      }
+
+      // Step 2: Create booking with customer_id
+      let startTime: Date;
+      let endTime: Date;
+
+      if (hireType === '4hr' && selectedSlot) {
+        startTime = selectedSlot.start;
+        endTime = selectedSlot.end;
+      } else {
+        startTime = setTimeOnDate(selectedDate, settings.opening_time);
+        endTime = setTimeOnDate(selectedDate, settings.closing_time);
+      }
+
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          tool_id: tool.id,
+          customer_id: customerId,
+          customer_name: name.trim(),
+          customer_email: emailTrim,
+          customer_phone: phone.trim(),
+          hire_type: hireType,
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+          notes: notes.trim() || null,
+          status: 'pending',
+        })
+        .select()
+        .single();
+
+      if (bookingError || !booking) {
+        setError('Failed to create booking. Please try again.');
+        setSubmitting(false);
+        return;
+      }
+
+      // Step 3: Send emails (non-blocking)
+      sendRequestReceivedEmail(booking, tool);
+      sendAdminNewRequestEmail(booking, tool);
+
+      navigate('/booking/confirmation', {
+        state: {
+          booking,
+          tool,
+          settings,
+        },
+      });
+    } catch (err) {
+      console.error('Booking submission error:', err);
+      setError('An unexpected error occurred. Please try again.');
       setSubmitting(false);
-      return;
     }
-
-    // Send emails (non-blocking)
-    sendRequestReceivedEmail(booking, tool);
-    sendAdminNewRequestEmail(booking, tool);
-
-    navigate('/booking/confirmation', {
-      state: {
-        booking,
-        tool,
-        settings,
-      },
-    });
   };
 
   if (loading) {
@@ -363,6 +417,29 @@ const ToolDetailPage = () => {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Address *
+                      </label>
+                      <input
+                        type="text"
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-green"
+                        placeholder="Your address"
+                      />
+                    </div>
+                    <div>
+                      <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={marketingOptIn}
+                          onChange={(e) => setMarketingOptIn(e.target.checked)}
+                          className="w-4 h-4 rounded border-gray-300 text-brand-green focus:ring-2 focus:ring-brand-green"
+                        />
+                        Send me special offers and discount announcements
+                      </label>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
                         Notes (optional)
                       </label>
                       <textarea
@@ -375,7 +452,7 @@ const ToolDetailPage = () => {
                     </div>
                     <button
                       onClick={() => setStep('confirm')}
-                      disabled={!name || !email || !phone}
+                      disabled={!name || !email || !phone || !address}
                       className="bg-brand-green text-white font-semibold px-6 py-2.5 rounded-lg hover:bg-brand-green-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Review Booking
@@ -385,7 +462,7 @@ const ToolDetailPage = () => {
               )}
 
             {/* Step 5: Confirm */}
-            {step === 'confirm' && name && email && phone && (
+            {step === 'confirm' && name && email && phone && address && (
               <div className="bg-white rounded-xl p-6 shadow-sm border border-brand-gold">
                 <h2 className="font-bold text-gray-800 mb-4">5. Confirm Booking</h2>
 
@@ -430,6 +507,14 @@ const ToolDetailPage = () => {
                   <div className="flex justify-between">
                     <span className="text-gray-600">Phone:</span>
                     <span className="font-medium">{phone}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Address:</span>
+                    <span className="font-medium">{address}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Marketing emails:</span>
+                    <span className="font-medium">{marketingOptIn ? 'Yes' : 'No'}</span>
                   </div>
                 </div>
 

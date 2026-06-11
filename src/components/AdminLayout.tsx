@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAdmin } from '@/contexts/AdminContext';
+import { supabase } from '@/lib/supabase';
 import {
   LayoutDashboard,
   Wrench,
@@ -10,12 +11,14 @@ import {
   Menu,
   X,
   Home,
+  Users,
 } from 'lucide-react';
 
 const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/admin/tools', label: 'Tools', icon: Wrench },
   { to: '/admin/bookings', label: 'Bookings', icon: CalendarCheck },
+  { to: '/admin/customers', label: 'Customers', icon: Users },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -24,11 +27,28 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [customerCount, setCustomerCount] = useState(0);
 
   const handleLogout = () => {
     logout();
     navigate('/admin');
   };
+
+  useEffect(() => {
+    const loadCustomerCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('customers')
+          .select('id', { count: 'exact', head: true });
+        if (!error) {
+          setCustomerCount(count || 0);
+        }
+      } catch (err) {
+        console.error('Error loading customer count:', err);
+      }
+    };
+    loadCustomerCount();
+  }, []);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -65,6 +85,11 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
           >
             <Icon size={18} />
             {label}
+            {label === 'Customers' && customerCount > 0 && (
+              <span className="ml-auto bg-brand-gold text-brand-green text-xs font-bold px-2 py-0.5 rounded-full">
+                {customerCount}
+              </span>
+            )}
           </Link>
         ))}
       </nav>
