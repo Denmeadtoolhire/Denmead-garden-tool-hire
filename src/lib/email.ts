@@ -106,6 +106,55 @@ function bookingTable(booking: Booking, toolName: string): string {
   `;
 }
 
+function generateGoogleCalendarUrl(
+  title: string,
+  startDate: Date,
+  endDate: Date,
+  location: string
+): string {
+  const formatGoogleDate = (d: Date) => {
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const hours = String(d.getUTCHours()).padStart(2, '0');
+    const minutes = String(d.getUTCMinutes()).padStart(2, '0');
+    return `${year}${month}${day}T${hours}${minutes}00Z`;
+  };
+
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: title,
+    dates: `${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`,
+    location: location,
+    details: 'Denmead Tool & Garden Hire Booking - Please collect your tool',
+  });
+
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function generateOutlookUrl(
+  title: string,
+  startDate: Date,
+  endDate: Date,
+  location: string
+): string {
+  const formatOutlookDate = (d: Date) => {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:00`;
+  };
+
+  const params = new URLSearchParams({
+    rru: 'addevent',
+    startdt: formatOutlookDate(startDate),
+    enddt: formatOutlookDate(endDate),
+    subject: title,
+    location: location,
+    body: 'Denmead Tool & Garden Hire Booking - Please collect your tool',
+  });
+
+  return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
+}
+
 /**
  * Email 1: Sent to customer when they submit a booking request.
  */
@@ -145,16 +194,71 @@ export async function sendApprovalEmail(booking: Booking, tool: Tool): Promise<v
   const subject = settings?.confirmation_email_subject || 'Your Booking is Confirmed - Denmead Tool Hire';
   const bodyText = settings?.confirmation_email_body || 'Great news! Your booking has been confirmed. Please collect your tool at the time specified. We accept cash or card payment on collection.';
 
+  const startDate = parseISO(booking.start_time);
+  const endDate = parseISO(booking.end_time);
+  const bookingRef = booking.id.substring(0, 8).toUpperCase();
+
+  // Google Calendar link
+  const googleCalendarUrl = generateGoogleCalendarUrl(
+    tool.name,
+    startDate,
+    endDate,
+    '1 Inhams Lane, Denmead, PO7 6LX'
+  );
+
+  // Outlook Calendar link
+  const outlookUrl = generateOutlookUrl(
+    tool.name,
+    startDate,
+    endDate,
+    '1 Inhams Lane, Denmead, PO7 6LX'
+  );
+
+  // iCalendar download link
+  const icsDownloadUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/booking-calendar/${booking.id}`;
+
+  // Google Maps link
+  const mapsUrl = 'https://www.google.com/maps/search/1+Inhams+Lane+Denmead+PO7+6LX';
+
   const html = `
     ${baseHeader('Booking Confirmed!')}
     <p>Hi ${booking.customer_name},</p>
     <p>${bodyText}</p>
+
+    <div style="background: #1a6b2f; color: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <p style="margin: 0 0 8px; font-size: 12px; opacity: 0.9;">Booking Reference</p>
+      <p style="margin: 0; font-size: 28px; font-weight: bold; font-family: monospace;">${bookingRef}</p>
+    </div>
+
     ${bookingTable(booking, tool.name)}
+
     <div style="background: #fff3cd; border: 1px solid #f5c518; border-radius: 8px; padding: 15px; margin: 20px 0;">
       <strong>Collection address:</strong><br>
-      ${PICKUP_ADDRESS}
+      <a href="${mapsUrl}" style="color: #1a6b2f; text-decoration: none; font-weight: bold;">
+        📍 1 Inhams Lane, Denmead, PO7 6LX
+      </a>
     </div>
+
     <p><strong>Payment:</strong> Cash or card accepted on collection.</p>
+
+    <div style="background: #f0f4f8; border-radius: 8px; padding: 15px; margin: 20px 0;">
+      <p style="margin-top: 0; font-weight: bold; color: #1a6b2f;">Add to Your Calendar</p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="${googleCalendarUrl}"
+           style="display: inline-block; background: #1a6b2f; color: white; font-weight: bold; padding: 10px 16px; border-radius: 6px; text-decoration: none; font-size: 14px;">
+          📅 Google Calendar
+        </a>
+        <a href="${outlookUrl}"
+           style="display: inline-block; background: #0078d4; color: white; font-weight: bold; padding: 10px 16px; border-radius: 6px; text-decoration: none; font-size: 14px;">
+          📅 Outlook
+        </a>
+        <a href="${icsDownloadUrl}"
+           style="display: inline-block; background: #666; color: white; font-weight: bold; padding: 10px 16px; border-radius: 6px; text-decoration: none; font-size: 14px;">
+          📥 Download .ics
+        </a>
+      </div>
+    </div>
+
     <p>If you need to cancel or have any questions, please call us on <strong>${PHONE}</strong> or email <strong>${ADMIN_EMAIL}</strong>.</p>
     ${baseFooter()}
   `;
