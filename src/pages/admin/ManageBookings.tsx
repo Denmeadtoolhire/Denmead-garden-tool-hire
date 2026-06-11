@@ -58,6 +58,8 @@ const ManageBookings = () => {
 
   // Approve state
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [clashWarning, setClashWarning] = useState<BookingWithTool | null>(null);
+  const [confirmingApprove, setConfirmingApprove] = useState<BookingWithTool | null>(null);
 
   // Suggest alternative modal
   const [altBooking, setAltBooking] = useState<BookingWithTool | null>(null);
@@ -94,6 +96,24 @@ const ManageBookings = () => {
 
   const handleApprove = async (b: BookingWithTool) => {
     setApprovingId(b.id);
+
+    // Check for clashing approved bookings
+    const { data: clashing } = await supabase
+      .from('bookings')
+      .select('*')
+      .eq('tool_id', b.tool_id)
+      .eq('status', 'approved')
+      .lt('start_time', b.end_time)
+      .gt('end_time', b.start_time);
+
+    if (clashing && clashing.length > 0) {
+      setClashWarning(b);
+      setConfirmingApprove(b);
+      setApprovingId(null);
+      return;
+    }
+
+    // No clash, proceed with approval
     const { error } = await supabase.from('bookings').update({ status: 'approved' }).eq('id', b.id);
     if (error) {
       showFlash('Error approving booking.');
@@ -105,6 +125,23 @@ const ManageBookings = () => {
       showFlash(`Approved booking for ${b.customer_name}.`);
       await loadBookings();
     }
+    setApprovingId(null);
+  };
+
+  const handleConfirmApproveWithClash = async (b: BookingWithTool) => {
+    setApprovingId(b.id);
+    const { error } = await supabase.from('bookings').update({ status: 'approved' }).eq('id', b.id);
+    if (error) {
+      showFlash('Error approving booking.');
+    } else {
+      if (b.tools) {
+        sendApprovalEmail(b, { ...b.tools, id: b.tool_id } as any);
+      }
+      showFlash(`⚠️ Approved — this CLASHES with an existing approved booking!`);
+      await loadBookings();
+    }
+    setClashWarning(null);
+    setConfirmingApprove(null);
     setApprovingId(null);
   };
 
@@ -244,6 +281,48 @@ const ManageBookings = () => {
                   className="flex-1 border border-gray-200 py-2.5 rounded-lg hover:bg-gray-50"
                 >
                   Keep
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Clash warning modal */}
+        {confirmingApprove && clashWarning && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl">
+              <div className="flex items-start gap-3 mb-4">
+                <AlertTriangle className="text-red-500 mt-0.5 shrink-0" size={22} />
+                <div>
+                  <h3 className="font-bold text-lg text-red-600">Booking Clash Detected!</h3>
+                  <p className="text-gray-600 text-sm mt-2">
+                    Approving this booking would <strong>clash with an existing approved booking</strong> for the same tool at the same time.
+                  </p>
+                  <p className="text-gray-600 text-sm mt-2">
+                    Tool: <strong>{clashWarning.tools?.name}</strong><br />
+                    Time: <strong>{format(parseISO(clashWarning.start_time), 'dd MMM, HH:mm')} – {format(parseISO(clashWarning.end_time), 'HH:mm')}</strong>
+                  </p>
+                  <p className="text-gray-600 text-sm mt-2">
+                    You can still approve it (if you own multiple units), or <strong>suggest an alternative time</strong> to this customer.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => handleConfirmApproveWithClash(clashWarning)}
+                  disabled={approvingId !== null}
+                  className="w-full bg-red-600 text-white font-semibold py-2.5 rounded-lg hover:bg-red-700 disabled:opacity-60"
+                >
+                  {approvingId ? 'Approving...' : 'Approve Anyway'}
+                </button>
+                <button
+                  onClick={() => {
+                    setConfirmingApprove(null);
+                    setClashWarning(null);
+                  }}
+                  className="w-full border border-gray-200 py-2.5 rounded-lg hover:bg-gray-50 font-semibold"
+                >
+                  Cancel & Choose Alternative
                 </button>
               </div>
             </div>
