@@ -59,6 +59,8 @@ const SettingsPage = () => {
         min_notice_hours: settings.min_notice_hours,
         request_received_email_subject: settings.request_received_email_subject,
         request_received_email_body: settings.request_received_email_body,
+        alternative_email_subject: settings.alternative_email_subject,
+        alternative_email_body: settings.alternative_email_body,
         confirmation_email_subject: settings.confirmation_email_subject,
         confirmation_email_body: settings.confirmation_email_body,
       })
@@ -241,6 +243,42 @@ const SettingsPage = () => {
                   rows={4}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-green"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Alternative Suggestion Email */}
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <h2 className="font-semibold text-gray-800 mb-4">Alternative Time Suggestion Email</h2>
+            <p className="text-sm text-gray-600 mb-4">Sent to customers when you suggest a different date or time for their booking</p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Subject
+                </label>
+                <input
+                  type="text"
+                  value={settings.alternative_email_subject ?? ''}
+                  onChange={(e) =>
+                    setSettings({ ...settings, alternative_email_subject: e.target.value })
+                  }
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-green"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Body
+                </label>
+                <textarea
+                  value={settings.alternative_email_body ?? ''}
+                  onChange={(e) =>
+                    setSettings({ ...settings, alternative_email_body: e.target.value })
+                  }
+                  rows={4}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-green"
+                />
+                <p className="text-xs text-gray-400 mt-1">The original requested time and your suggested alternative will be shown automatically below this text, along with Accept and Decline buttons.</p>
               </div>
             </div>
           </div>

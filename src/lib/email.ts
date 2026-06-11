@@ -181,17 +181,22 @@ export async function sendAlternativeSuggestionEmail(
   const key = getResendKey();
   if (!key) return;
 
+  const settings = await getSettings();
+  const subject = settings?.alternative_email_subject || 'Alternative Time Suggested - Denmead Tool Hire';
+  const bodyText = settings?.alternative_email_body || 'Unfortunately your requested time isn\'t available. We\'d like to suggest an alternative time for your hire. Please use the buttons below to accept or decline.';
+
   const originalDateTime = formatDateTime(booking.start_time, booking.end_time, booking.hire_type);
   const suggestedDateTime = formatDateTime(suggestedStart, suggestedEnd, booking.hire_type);
 
   const html = `
     ${baseHeader('Alternative Time Suggested')}
     <p>Hi ${booking.customer_name},</p>
-    <p>Thank you for your booking request for the <strong>${tool.name}</strong>. Unfortunately your requested time (<strong>${originalDateTime}</strong>) isn't available.</p>
-    <p>We'd like to suggest the following alternative:</p>
+    <p>${bodyText}</p>
+    <p>Your original request: <strong>${originalDateTime}</strong></p>
+    <p>Our suggested alternative:</p>
     <div style="background: white; border: 2px solid #1a6b2f; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
       <p style="font-size: 18px; font-weight: bold; color: #1a6b2f; margin: 0;">${suggestedDateTime}</p>
-      <p style="color: #666; margin: 8px 0 0;">${booking.hire_type === '4hr' ? '4 Hour hire' : 'Full Day hire'}</p>
+      <p style="color: #666; margin: 8px 0 0;">${booking.hire_type === '4hr' ? '4 Hour hire' : 'Full Day hire'} — ${tool.name}</p>
     </div>
     <p>Please let us know if this works for you:</p>
     <div style="text-align: center; margin: 30px 0;">
@@ -211,7 +216,7 @@ export async function sendAlternativeSuggestionEmail(
   await sendEmail(key, {
     from: FROM_ADDRESS,
     to: [booking.customer_email],
-    subject: 'Alternative Time Suggested - Denmead Tool Hire',
+    subject,
     html,
   });
 }
