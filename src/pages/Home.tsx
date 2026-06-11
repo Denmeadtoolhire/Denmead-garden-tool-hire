@@ -32,6 +32,11 @@ const HomePage = () => {
       {/* Hero */}
       <section className="bg-gradient-to-br from-brand-green to-brand-green-light text-white">
         <div className="max-w-6xl mx-auto px-4 py-20 text-center">
+          <img
+            src="https://res.cloudinary.com/da5zsuxlz/image/upload/v1781197783/logo_ncga2w.png"
+            alt="Denmead Tool & Garden Hire"
+            className="h-40 w-auto object-contain mx-auto mb-8"
+          />
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
             Hire the Tools You Need,<br />
             <span className="text-brand-gold">When You Need Them</span>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Wrench } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+
+const LOGO = 'https://res.cloudinary.com/da5zsuxlz/image/upload/v1781197783/logo_ncga2w.png';
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
@@ -17,12 +19,9 @@ const Navbar = () => {
   return (
     <nav className="bg-brand-green shadow-md sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2">
-            <Wrench className="text-brand-gold" size={24} />
-            <span className="text-white font-bold text-lg leading-tight">
-              Denmead Tool &amp; Garden Hire
-            </span>
+        <div className="flex items-center justify-between h-20">
+          <Link to="/" className="flex items-center">
+            <img src={LOGO} alt="Denmead Tool & Garden Hire" className="h-16 w-auto object-contain" />
           </Link>
 
           {/* Desktop nav */}
