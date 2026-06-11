@@ -39,12 +39,6 @@ const Navbar = () => {
                 {l.label}
               </Link>
             ))}
-            <Link
-              to="/tools"
-              className="bg-brand-gold text-brand-green font-bold px-4 py-2 rounded-md hover:bg-brand-gold-dark transition-colors"
-            >
-              Book Now
-            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -72,13 +66,6 @@ const Navbar = () => {
                 {l.label}
               </Link>
             ))}
-            <Link
-              to="/tools"
-              onClick={() => setOpen(false)}
-              className="bg-brand-gold text-brand-green font-bold px-4 py-2 rounded-md text-center"
-            >
-              Book Now
-            </Link>
           </div>
         )}
       </div>
