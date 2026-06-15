@@ -59,6 +59,7 @@ const ToolCard = ({ tool, categoryName }: ToolCardProps) => {
 
         {/* Hire type selector */}
         <div className="mt-auto mb-3">
+          <p className="text-xs font-semibold text-gray-600 mb-2">Select Duration</p>
           <div className="flex rounded-xl overflow-hidden border border-gray-200">
             <button
               onClick={() => setSelectedHireType('4hr')}

@@ -127,7 +127,7 @@ const CartPage = () => {
 
             {/* Hire type toggle */}
             <div className="mb-5">
-              <p className="text-sm font-semibold text-gray-700 mb-2">Hire Period</p>
+              <p className="text-xs font-semibold text-gray-600 mb-2">Select Duration</p>
               <div className="flex rounded-xl overflow-hidden border border-gray-200">
                 <button
                   onClick={() => dispatch({ type: 'SET_HIRE_TYPE', hireType: '4hr' })}
