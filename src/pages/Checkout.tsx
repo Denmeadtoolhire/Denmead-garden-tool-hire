@@ -8,10 +8,8 @@ import { ChevronLeft, AlertCircle } from 'lucide-react';
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const { state: cartState, dispatch: cartDispatch } = useCart();
-  const [stage, setStage] = useState<'hire-type' | 'datetime' | 'customer' | 'review'>(
-    'hire-type'
-  );
-  const [hireType, setHireType] = useState<'4hr' | '1day' | null>(null);
+  const hireType = cartState.hireType;
+  const [stage, setStage] = useState<'datetime' | 'customer' | 'review'>('datetime');
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [customerData, setCustomerData] = useState({
@@ -37,10 +35,10 @@ const CheckoutPage = () => {
     loadSettings();
   }, []);
 
-  // Fetch available slots when date or hire type changes
+  // Fetch available slots when date changes
   useEffect(() => {
     const fetchAvailableSlots = async () => {
-      if (!selectedDate || !hireType || !settings) return;
+      if (!selectedDate || !settings) return;
 
       setLoadingSlots(true);
       try {
@@ -202,15 +200,11 @@ const CheckoutPage = () => {
       <div className="flex items-center gap-3 mb-6 md:mb-8">
         <button
           onClick={() => {
-            if (stage === 'hire-type') {
+            if (stage === 'datetime') {
               navigate('/booking/cart');
             } else {
               setStage(
-                stage === 'datetime'
-                  ? 'hire-type'
-                  : stage === 'customer'
-                    ? 'datetime'
-                    : 'customer'
+                stage === 'customer' ? 'datetime' : 'customer'
               );
             }
           }}
@@ -221,71 +215,21 @@ const CheckoutPage = () => {
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Checkout</h1>
       </div>
 
-      {/* Stage 1: Hire Type */}
-      {stage === 'hire-type' && (
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl p-6 shadow-md">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              Select Hire Period
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Choose how long you'd like to hire these tools
-            </p>
+      {/* Hire type summary banner */}
+      <div className="bg-green-50 border border-brand-green rounded-xl px-4 py-3 mb-4 flex items-center justify-between">
+        <span className="text-brand-green font-semibold text-sm">
+          Hire period: <strong>{hireType === '4hr' ? '4 Hours' : 'Full Day'}</strong>
+          {' · '}Total: <strong>£{cartTotal.toFixed(2)}</strong>
+        </span>
+        <button
+          onClick={() => navigate('/booking/cart')}
+          className="text-xs text-brand-green underline font-medium"
+        >
+          Change
+        </button>
+      </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <button
-                onClick={() => {
-                  setHireType('4hr');
-                  setStage('datetime');
-                }}
-                className={`p-6 rounded-xl border-2 transition-all min-h-32 flex flex-col justify-center ${
-                  hireType === '4hr'
-                    ? 'border-brand-green bg-green-50'
-                    : 'border-gray-200 hover:border-brand-green'
-                }`}
-              >
-                <div className="text-2xl md:text-3xl font-bold text-brand-green mb-2">
-                  4 Hours
-                </div>
-                <p className="text-gray-600 text-sm mb-3">
-                  Perfect for quick projects
-                </p>
-                <div className="text-lg md:text-xl font-bold text-gray-900">
-                  £{(
-                    cartState.items.reduce((sum, item) => sum + item.tool.price_4hr * item.quantity, 0)
-                  ).toFixed(2)}
-                </div>
-              </button>
-
-              <button
-                onClick={() => {
-                  setHireType('1day');
-                  setStage('datetime');
-                }}
-                className={`p-6 rounded-xl border-2 transition-all min-h-32 flex flex-col justify-center ${
-                  hireType === '1day'
-                    ? 'border-brand-green bg-green-50'
-                    : 'border-gray-200 hover:border-brand-green'
-                }`}
-              >
-                <div className="text-2xl md:text-3xl font-bold text-brand-green mb-2">
-                  Full Day
-                </div>
-                <p className="text-gray-600 text-sm mb-3">
-                  Opening to closing time
-                </p>
-                <div className="text-lg md:text-xl font-bold text-gray-900">
-                  £{(
-                    cartState.items.reduce((sum, item) => sum + item.tool.price_1day * item.quantity, 0)
-                  ).toFixed(2)}
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Stage 2: Date & Time */}
+      {/* Stage 1: Date & Time */}
       {stage === 'datetime' && (
         <div className="space-y-6">
           <div className="bg-white rounded-2xl p-6 shadow-md">

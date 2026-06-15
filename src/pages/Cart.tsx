@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, Plus, Minus, ShoppingCart } from 'lucide-react';
+import { Trash2, Plus, Minus, ShoppingCart, Clock, Calendar } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 
 const CartPage = () => {
@@ -26,7 +26,10 @@ const CartPage = () => {
     );
   }
 
-  const total = state.items.reduce((sum, item) => sum + (item.tool.price_4hr * item.quantity), 0);
+  const total = state.items.reduce((sum, item) => {
+    const price = state.hireType === '4hr' ? item.tool.price_4hr : item.tool.price_1day;
+    return sum + price * item.quantity;
+  }, 0);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
@@ -122,25 +125,56 @@ const CartPage = () => {
           <div className="bg-white rounded-2xl shadow-md p-6 sticky top-20 lg:top-24">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h2>
 
-            <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
-              <div className="flex justify-between text-gray-600">
-                <span>{state.items.length} item(s)</span>
-                <span className="font-semibold">
-                  £{total.toFixed(2)}
-                </span>
+            {/* Hire type toggle */}
+            <div className="mb-5">
+              <p className="text-sm font-semibold text-gray-700 mb-2">Hire Period</p>
+              <div className="flex rounded-xl overflow-hidden border border-gray-200">
+                <button
+                  onClick={() => dispatch({ type: 'SET_HIRE_TYPE', hireType: '4hr' })}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-bold transition-colors ${
+                    state.hireType === '4hr'
+                      ? 'bg-brand-green text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Clock size={14} />
+                  4 Hours
+                </button>
+                <button
+                  onClick={() => dispatch({ type: 'SET_HIRE_TYPE', hireType: '1day' })}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-bold transition-colors border-l border-gray-200 ${
+                    state.hireType === '1day'
+                      ? 'bg-brand-green text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Calendar size={14} />
+                  Full Day
+                </button>
               </div>
             </div>
 
-            <p className="text-sm text-gray-500 mb-6">
-              Select your hire period (4-hour or full-day) at checkout
-            </p>
+            <div className="space-y-2 mb-6 pb-6 border-b border-gray-200">
+              {state.items.map((item) => {
+                const price = state.hireType === '4hr' ? item.tool.price_4hr : item.tool.price_1day;
+                return (
+                  <div key={item.tool.id} className="flex justify-between text-sm text-gray-600">
+                    <span className="truncate mr-2">{item.tool.name}</span>
+                    <span className="font-medium shrink-0">£{(price * item.quantity).toFixed(2)}</span>
+                  </div>
+                );
+              })}
+              <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-gray-100 mt-2">
+                <span>Total</span>
+                <span className="text-brand-green">£{total.toFixed(2)}</span>
+              </div>
+            </div>
 
             <Link
               to="/booking/checkout"
-              disabled={state.items.length === 0}
-              className="block w-full bg-brand-green text-white font-bold py-3 px-4 rounded-xl text-center hover:bg-brand-green-dark transition-colors"
+              className="block w-full bg-brand-green text-white font-bold py-4 px-4 rounded-xl text-center hover:bg-brand-green-dark transition-colors text-lg"
             >
-              Proceed to Checkout
+              Complete Booking
             </Link>
           </div>
         </div>
