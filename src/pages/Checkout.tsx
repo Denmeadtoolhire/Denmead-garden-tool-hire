@@ -198,8 +198,8 @@ const CheckoutPage = () => {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12">
-      <div className="flex items-center gap-3 mb-8">
+    <div className="max-w-2xl mx-auto px-4 py-8 md:py-12">
+      <div className="flex items-center gap-3 mb-6 md:mb-8">
         <button
           onClick={() => {
             if (stage === 'hire-type') {
@@ -214,11 +214,11 @@ const CheckoutPage = () => {
               );
             }
           }}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="w-12 h-12 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors shrink-0"
         >
-          <ChevronLeft size={20} className="text-gray-600" />
+          <ChevronLeft size={24} className="text-gray-600" />
         </button>
-        <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Checkout</h1>
       </div>
 
       {/* Stage 1: Hire Type */}
@@ -238,19 +238,19 @@ const CheckoutPage = () => {
                   setHireType('4hr');
                   setStage('datetime');
                 }}
-                className={`p-6 rounded-xl border-2 transition-all ${
+                className={`p-6 rounded-xl border-2 transition-all min-h-32 flex flex-col justify-center ${
                   hireType === '4hr'
                     ? 'border-brand-green bg-green-50'
                     : 'border-gray-200 hover:border-brand-green'
                 }`}
               >
-                <div className="text-2xl font-bold text-brand-green mb-2">
+                <div className="text-2xl md:text-3xl font-bold text-brand-green mb-2">
                   4 Hours
                 </div>
                 <p className="text-gray-600 text-sm mb-3">
                   Perfect for quick projects
                 </p>
-                <div className="text-lg font-bold text-gray-900">
+                <div className="text-lg md:text-xl font-bold text-gray-900">
                   £{(
                     cartState.items.reduce((sum, item) => sum + item.tool.price_4hr * item.quantity, 0)
                   ).toFixed(2)}
@@ -262,19 +262,19 @@ const CheckoutPage = () => {
                   setHireType('1day');
                   setStage('datetime');
                 }}
-                className={`p-6 rounded-xl border-2 transition-all ${
+                className={`p-6 rounded-xl border-2 transition-all min-h-32 flex flex-col justify-center ${
                   hireType === '1day'
                     ? 'border-brand-green bg-green-50'
                     : 'border-gray-200 hover:border-brand-green'
                 }`}
               >
-                <div className="text-2xl font-bold text-brand-green mb-2">
+                <div className="text-2xl md:text-3xl font-bold text-brand-green mb-2">
                   Full Day
                 </div>
                 <p className="text-gray-600 text-sm mb-3">
                   Opening to closing time
                 </p>
-                <div className="text-lg font-bold text-gray-900">
+                <div className="text-lg md:text-xl font-bold text-gray-900">
                   £{(
                     cartState.items.reduce((sum, item) => sum + item.tool.price_1day * item.quantity, 0)
                   ).toFixed(2)}
@@ -332,7 +332,7 @@ const CheckoutPage = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                       {availableSlots.map((slot, idx) => (
                         <button
                           key={idx}
@@ -344,7 +344,7 @@ const CheckoutPage = () => {
                             setSelectedTime(slotTime);
                           }}
                           disabled={!slot.available}
-                          className={`py-3 px-3 rounded-lg font-medium text-sm transition-colors ${
+                          className={`py-3 px-2 rounded-lg font-medium text-xs sm:text-sm transition-colors min-h-12 flex items-center justify-center ${
                             slot.available
                               ? selectedTime ===
                                 `${slot.start.getHours().toString().padStart(2, '0')}:${slot.start
@@ -368,7 +368,7 @@ const CheckoutPage = () => {
             <button
               onClick={() => setStage('customer')}
               disabled={!selectedDate || !selectedTime || availableSlots.length === 0}
-              className="w-full mt-6 bg-brand-green text-white font-bold py-3 px-4 rounded-xl hover:bg-brand-green-dark disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className="w-full mt-6 bg-brand-green text-white font-bold py-4 px-4 rounded-xl hover:bg-brand-green-dark disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-lg"
             >
               Continue
             </button>
@@ -386,7 +386,7 @@ const CheckoutPage = () => {
 
             <form className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-1">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Full Name *
                 </label>
                 <input
@@ -395,13 +395,13 @@ const CheckoutPage = () => {
                   onChange={(e) =>
                     setCustomerData({ ...customerData, name: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent text-base"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-1">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Email *
                 </label>
                 <input
@@ -410,13 +410,13 @@ const CheckoutPage = () => {
                   onChange={(e) =>
                     setCustomerData({ ...customerData, email: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent text-base"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-1">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Phone *
                 </label>
                 <input
@@ -425,13 +425,13 @@ const CheckoutPage = () => {
                   onChange={(e) =>
                     setCustomerData({ ...customerData, phone: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent text-base"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-1">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Address *
                 </label>
                 <input
@@ -440,13 +440,13 @@ const CheckoutPage = () => {
                   onChange={(e) =>
                     setCustomerData({ ...customerData, address: e.target.value })
                   }
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent text-base"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-1">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   Notes (optional)
                 </label>
                 <textarea
@@ -455,7 +455,7 @@ const CheckoutPage = () => {
                     setCustomerData({ ...customerData, notes: e.target.value })
                   }
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent text-base"
                 />
               </div>
 
@@ -480,7 +480,7 @@ const CheckoutPage = () => {
             <button
               onClick={() => setStage('review')}
               disabled={!customerData.name || !customerData.email || !customerData.phone || !customerData.address}
-              className="w-full mt-6 bg-brand-green text-white font-bold py-3 px-4 rounded-xl hover:bg-brand-green-dark disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className="w-full mt-6 bg-brand-green text-white font-bold py-4 px-4 rounded-xl hover:bg-brand-green-dark disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-lg"
             >
               Review Order
             </button>
@@ -545,7 +545,7 @@ const CheckoutPage = () => {
             <button
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="w-full bg-brand-green text-white font-bold py-3 px-4 rounded-xl hover:bg-brand-green-dark disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-brand-green text-white font-bold py-4 px-4 rounded-xl hover:bg-brand-green-dark disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-lg"
             >
               {isSubmitting ? 'Creating Booking...' : 'Confirm & Request Booking'}
             </button>

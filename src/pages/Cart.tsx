@@ -29,20 +29,20 @@ const CartPage = () => {
   const total = state.items.reduce((sum, item) => sum + (item.tool.price_4hr * item.quantity), 0);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-12">
-      <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-8">Shopping Cart</h1>
+    <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
+      <h1 className="text-2xl md:text-4xl font-extrabold text-gray-900 mb-6 md:mb-8">Shopping Cart</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
         {/* Cart items */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 order-2 lg:order-1">
           <div className="bg-white rounded-2xl shadow-md overflow-hidden">
             {state.items.map((item) => (
               <div
                 key={item.tool.id}
-                className="flex gap-4 p-6 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
+                className="flex flex-col sm:flex-row gap-4 p-4 sm:p-6 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors"
               >
                 {/* Tool image */}
-                <div className="w-24 h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-100 rounded-xl overflow-hidden flex-shrink-0 mx-auto sm:mx-0">
                   {item.tool.image_url ? (
                     <img
                       src={item.tool.image_url}
@@ -51,18 +51,18 @@ const CartPage = () => {
                     />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-brand-green to-brand-green-light flex items-center justify-center">
-                      <ShoppingCart size={32} className="text-white opacity-40" />
+                      <ShoppingCart size={28} className="text-white opacity-40" />
                     </div>
                   )}
                 </div>
 
                 {/* Tool details */}
-                <div className="flex-1">
+                <div className="flex-1 text-center sm:text-left">
                   <h3 className="text-lg font-bold text-gray-900 mb-1">{item.tool.name}</h3>
-                  <p className="text-gray-500 text-sm mb-3">£{Number(item.tool.price_4hr).toFixed(2)} per 4hr</p>
+                  <p className="text-gray-500 text-sm mb-4">£{Number(item.tool.price_4hr).toFixed(2)} per 4hr</p>
 
                   {/* Quantity controls */}
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center sm:justify-start gap-4">
                     <button
                       onClick={() =>
                         dispatch({
@@ -72,11 +72,11 @@ const CartPage = () => {
                         })
                       }
                       disabled={item.quantity <= 1}
-                      className="p-1 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="w-10 h-10 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                     >
-                      <Minus size={16} className="text-gray-600" />
+                      <Minus size={18} className="text-gray-600" />
                     </button>
-                    <span className="font-semibold w-8 text-center">{item.quantity}</span>
+                    <span className="font-semibold w-8 text-center text-lg">{item.quantity}</span>
                     <button
                       onClick={() =>
                         dispatch({
@@ -85,21 +85,21 @@ const CartPage = () => {
                           quantity: item.quantity + 1,
                         })
                       }
-                      className="p-1 rounded-lg hover:bg-gray-200 transition-colors"
+                      className="w-10 h-10 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
                     >
-                      <Plus size={16} className="text-gray-600" />
+                      <Plus size={18} className="text-gray-600" />
                     </button>
                   </div>
                 </div>
 
                 {/* Price and remove */}
-                <div className="text-right">
-                  <p className="text-xl font-bold text-brand-green mb-4">
+                <div className="text-center sm:text-right flex flex-col items-center sm:items-end justify-between">
+                  <p className="text-xl font-bold text-brand-green mb-2">
                     £{(Number(item.tool.price_4hr) * item.quantity).toFixed(2)}
                   </p>
                   <button
                     onClick={() => dispatch({ type: 'REMOVE_ITEM', toolId: item.tool.id })}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="w-10 h-10 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center"
                   >
                     <Trash2 size={18} />
                   </button>
@@ -118,8 +118,8 @@ const CartPage = () => {
         </div>
 
         {/* Order summary */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl shadow-md p-6 sticky top-24">
+        <div className="order-1 lg:order-2">
+          <div className="bg-white rounded-2xl shadow-md p-6 sticky top-20 lg:top-24">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h2>
 
             <div className="space-y-3 mb-6 pb-6 border-b border-gray-200">
