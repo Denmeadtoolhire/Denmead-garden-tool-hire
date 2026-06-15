@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ShoppingCart } from 'lucide-react';
+import { useCart } from '@/contexts/CartContext';
 
 const LOGO = 'https://res.cloudinary.com/da5zsuxlz/image/upload/v1781197783/logo_ncga2w.png';
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const { state: cartState } = useCart();
 
   const links = [
     { to: '/', label: 'Home' },
@@ -45,6 +47,17 @@ const Navbar = () => {
               </Link>
             ))}
             <Link
+              to="/booking/cart"
+              className="relative p-2 text-white hover:text-brand-gold transition-colors"
+            >
+              <ShoppingCart size={20} />
+              {cartState.items.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                  {cartState.items.length}
+                </span>
+              )}
+            </Link>
+            <Link
               to="/tools"
               className="bg-brand-gold text-brand-green font-bold text-sm px-5 py-2.5 rounded-lg hover:bg-yellow-400 transition-colors shadow-sm"
             >
@@ -79,6 +92,19 @@ const Navbar = () => {
                 {l.label}
               </Link>
             ))}
+            <Link
+              to="/booking/cart"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 font-semibold py-2.5 px-2 rounded-lg text-white/90 hover:text-white hover:bg-white/5"
+            >
+              <ShoppingCart size={18} />
+              Cart
+              {cartState.items.length > 0 && (
+                <span className="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+                  {cartState.items.length}
+                </span>
+              )}
+            </Link>
             <Link
               to="/tools"
               onClick={() => setOpen(false)}

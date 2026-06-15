@@ -2,11 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AdminProvider, useAdmin } from './contexts/AdminContext';
+import { CartProvider } from './contexts/CartContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomePage from './pages/Home';
 import ToolsPage from './pages/Tools';
 import ToolDetailPage from './pages/ToolDetail';
+import CartPage from './pages/Cart';
+import CheckoutPage from './pages/Checkout';
 import BookingConfirmationPage from './pages/BookingConfirmation';
 import BookingRespondPage from './pages/BookingRespond';
 import AdminLogin from './pages/admin/AdminLogin';
@@ -38,47 +41,64 @@ function App() {
   return (
     <BrowserRouter>
       <AdminProvider>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <PublicLayout>
-                <HomePage />
-              </PublicLayout>
-            }
-          />
-          <Route
-            path="/tools"
-            element={
-              <PublicLayout>
-                <ToolsPage />
-              </PublicLayout>
-            }
-          />
-          <Route
-            path="/tools/:id"
-            element={
-              <PublicLayout>
-                <ToolDetailPage />
-              </PublicLayout>
-            }
-          />
-          <Route
-            path="/booking/confirmation"
-            element={
-              <PublicLayout>
-                <BookingConfirmationPage />
-              </PublicLayout>
-            }
-          />
-          <Route
-            path="/booking/respond"
-            element={
-              <PublicLayout>
-                <BookingRespondPage />
-              </PublicLayout>
-            }
-          />
+        <CartProvider>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <PublicLayout>
+                  <HomePage />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/tools"
+              element={
+                <PublicLayout>
+                  <ToolsPage />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/tools/:id"
+              element={
+                <PublicLayout>
+                  <ToolDetailPage />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/booking/cart"
+              element={
+                <PublicLayout>
+                  <CartPage />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/booking/checkout"
+              element={
+                <PublicLayout>
+                  <CheckoutPage />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/booking/confirmation"
+              element={
+                <PublicLayout>
+                  <BookingConfirmationPage />
+                </PublicLayout>
+              }
+            />
+            <Route
+              path="/booking/respond"
+              element={
+                <PublicLayout>
+                  <BookingRespondPage />
+                </PublicLayout>
+              }
+            />
           <Route path="/admin" element={<AdminLogin />} />
           <Route
             path="/admin/dashboard"
@@ -128,8 +148,9 @@ function App() {
               </PublicLayout>
             }
           />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </CartProvider>
       </AdminProvider>
     </BrowserRouter>
   );

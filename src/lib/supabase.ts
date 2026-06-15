@@ -25,12 +25,24 @@ export type Tool = {
   categories?: Category;
 };
 
+export type BookingItem = {
+  id: string;
+  booking_id: string;
+  tool_id: string;
+  quantity: number;
+  price_at_booking: number;
+  created_at: string;
+  tools?: Tool;
+};
+
 export type Booking = {
   id: string;
-  tool_id: string;
+  tool_id: string | null;
+  customer_id: string | null;
   customer_name: string;
   customer_email: string;
   customer_phone: string;
+  customer_address: string | null;
   hire_type: '4hr' | '1day';
   start_time: string;
   end_time: string;
@@ -42,6 +54,7 @@ export type Booking = {
   response_token: string | null;
   admin_notes: string | null;
   tools?: Tool;
+  booking_items?: BookingItem[];
 };
 
 export type Settings = {

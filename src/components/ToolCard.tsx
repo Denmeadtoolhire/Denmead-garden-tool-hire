@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, Calendar, Package, ArrowRight } from 'lucide-react';
+import { Clock, Calendar, Package, ArrowRight, ShoppingCart, Check } from 'lucide-react';
+import { useCart } from '@/contexts/CartContext';
 import type { Tool } from '@/lib/supabase';
 
 interface ToolCardProps {
@@ -9,6 +10,14 @@ interface ToolCardProps {
 }
 
 const ToolCard = ({ tool, categoryName }: ToolCardProps) => {
+  const { dispatch } = useCart();
+  const [addedToCart, setAddedToCart] = useState(false);
+
+  const handleAddToCart = () => {
+    dispatch({ type: 'ADD_ITEM', tool });
+    setAddedToCart(true);
+    setTimeout(() => setAddedToCart(false), 2000);
+  };
   return (
     <div className="card-hover bg-white rounded-2xl shadow-md hover:shadow-xl overflow-hidden border border-gray-100 flex flex-col">
       {/* Image */}
@@ -61,13 +70,35 @@ const ToolCard = ({ tool, categoryName }: ToolCardProps) => {
         </div>
 
         {tool.is_available ? (
-          <Link
-            to={`/tools/${tool.id}`}
-            className="flex items-center justify-center gap-2 w-full text-center bg-brand-green text-white font-bold py-2.5 px-4 rounded-xl hover:bg-brand-green-dark transition-colors"
-          >
-            Book Now
-            <ArrowRight size={16} />
-          </Link>
+          <div className="space-y-2">
+            <Link
+              to={`/tools/${tool.id}`}
+              className="flex items-center justify-center gap-2 w-full text-center bg-brand-green text-white font-bold py-2 px-4 rounded-xl hover:bg-brand-green-dark transition-colors text-sm"
+            >
+              Book Now
+              <ArrowRight size={14} />
+            </Link>
+            <button
+              onClick={handleAddToCart}
+              className={`flex items-center justify-center gap-2 w-full font-bold py-2 px-4 rounded-xl transition-colors text-sm ${
+                addedToCart
+                  ? 'bg-green-100 text-brand-green'
+                  : 'bg-green-50 text-brand-green hover:bg-green-100'
+              }`}
+            >
+              {addedToCart ? (
+                <>
+                  <Check size={14} />
+                  Added
+                </>
+              ) : (
+                <>
+                  <ShoppingCart size={14} />
+                  Add to Cart
+                </>
+              )}
+            </button>
+          </div>
         ) : (
           <button
             disabled
