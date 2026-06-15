@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/lib/supabase';
-import type { Booking } from '@/lib/supabase';
+import type { Booking, BookingItem } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { CheckCircle, Clock, AlertTriangle, X } from 'lucide-react';
 import { sendApprovalEmail, sendAlternativeSuggestionEmail } from '@/lib/email';
 
-type BookingWithTool = Booking & { tools: { name: string; price_4hr: number; price_1day: number } | null };
+type BookingWithDetails = Booking & {
+  tools?: { name: string; price_4hr: number; price_1day: number } | null;
+  booking_items?: Array<BookingItem & { tools?: { name: string } }>;
+};
 type Tab = 'pending' | 'approved' | 'all';
 
 function statusBadge(status: Booking['status']) {
@@ -51,8 +54,16 @@ for (let h = 7; h <= 20; h++) {
   TIME_OPTIONS.push(`${String(h).padStart(2, '0')}:00`);
 }
 
+// Helper to get tool names for a booking (handles both single-tool and multi-tool)
+function getToolNames(b: BookingWithDetails): string {
+  if (b.booking_items && b.booking_items.length > 0) {
+    return b.booking_items.map(bi => bi.tools?.name || 'Unknown').join(', ');
+  }
+  return b.tools?.name ?? '—';
+}
+
 const ManageBookings = () => {
-  const [bookings, setBookings] = useState<BookingWithTool[]>([]);
+  const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('pending');
 
@@ -83,9 +94,13 @@ const ManageBookings = () => {
     setLoading(true);
     const { data } = await supabase
       .from('bookings')
-      .select('*, tools(name, price_4hr, price_1day)')
+      .select(`
+        *,
+        tools(name, price_4hr, price_1day),
+        booking_items(id, tool_id, quantity, price_at_booking, tools(name))
+      `)
       .order('created_at', { ascending: false });
-    setBookings((data as BookingWithTool[]) ?? []);
+    setBookings((data as BookingWithDetails[]) ?? []);
     setLoading(false);
   };
 
@@ -94,23 +109,30 @@ const ManageBookings = () => {
     setTimeout(() => setFlash(''), 4000);
   };
 
-  const handleApprove = async (b: BookingWithTool) => {
+  const handleApprove = async (b: BookingWithDetails) => {
     setApprovingId(b.id);
 
-    // Check for clashing approved bookings
-    const { data: clashing } = await supabase
-      .from('bookings')
-      .select('*')
-      .eq('tool_id', b.tool_id)
-      .eq('status', 'approved')
-      .lt('start_time', b.end_time)
-      .gt('end_time', b.start_time);
+    // Get all tool IDs for this booking (multi-tool or single-tool)
+    const toolIds = b.booking_items && b.booking_items.length > 0
+      ? b.booking_items.map(bi => bi.tool_id)
+      : b.tool_id ? [b.tool_id] : [];
 
-    if (clashing && clashing.length > 0) {
-      setClashWarning(b);
-      setConfirmingApprove(b);
-      setApprovingId(null);
-      return;
+    // Check for clashing approved bookings for ANY tool in this booking
+    for (const toolId of toolIds) {
+      const { data: clashing } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('status', 'approved')
+        .lt('start_time', b.end_time)
+        .gt('end_time', b.start_time)
+        .or(`tool_id.eq.${toolId},booking_items.tool_id.eq.${toolId}`);
+
+      if (clashing && clashing.length > 0) {
+        setClashWarning(b);
+        setConfirmingApprove(b);
+        setApprovingId(null);
+        return;
+      }
     }
 
     // No clash, proceed with approval
@@ -128,7 +150,7 @@ const ManageBookings = () => {
     setApprovingId(null);
   };
 
-  const handleConfirmApproveWithClash = async (b: BookingWithTool) => {
+  const handleConfirmApproveWithClash = async (b: BookingWithDetails) => {
     setApprovingId(b.id);
     const { error } = await supabase.from('bookings').update({ status: 'approved' }).eq('id', b.id);
     if (error) {
@@ -299,7 +321,7 @@ const ManageBookings = () => {
                     Approving this booking would <strong>clash with an existing approved booking</strong> for the same tool at the same time.
                   </p>
                   <p className="text-gray-600 text-sm mt-2">
-                    Tool: <strong>{clashWarning.tools?.name}</strong><br />
+                    Tool(s): <strong>{getToolNames(clashWarning)}</strong><br />
                     Time: <strong>{format(parseISO(clashWarning.start_time), 'dd MMM, HH:mm')} – {format(parseISO(clashWarning.end_time), 'HH:mm')}</strong>
                   </p>
                   <p className="text-gray-600 text-sm mt-2">
@@ -343,7 +365,7 @@ const ManageBookings = () => {
                 </button>
               </div>
               <p className="text-sm text-gray-600 mb-4">
-                For <strong>{altBooking.customer_name}</strong> — {altBooking.tools?.name}
+                For <strong>{altBooking.customer_name}</strong> — {getToolNames(altBooking)}
                 <br />
                 Hire type: <strong>{altBooking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}</strong>
               </p>
@@ -415,7 +437,7 @@ const ManageBookings = () => {
                       {b.customer_email} &bull; {b.customer_phone}
                     </p>
                     <p className="text-sm font-medium text-gray-800 mt-1">
-                      {b.tools?.name ?? '—'} &bull; {b.hire_type === '4hr' ? '4 Hours' : 'Full Day'}
+                      {getToolNames(b)} &bull; {b.hire_type === '4hr' ? '4 Hours' : 'Full Day'}
                     </p>
                     <p className="text-sm text-gray-600">
                       {format(parseISO(b.start_time), 'EEEE d MMMM yyyy')} &bull;{' '}
@@ -493,7 +515,7 @@ const ManageBookings = () => {
                         <p className="text-xs text-gray-500">{b.customer_email}</p>
                       </td>
                       <td className="px-4 py-3 text-gray-700 hidden sm:table-cell">
-                        <p>{b.tools?.name ?? '—'}</p>
+                        <p>{getToolNames(b)}</p>
                         <p className="text-xs text-gray-500">
                           {b.hire_type === '4hr' ? '4 Hours' : 'Full Day'}
                         </p>
