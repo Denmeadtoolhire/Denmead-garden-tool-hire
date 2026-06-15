@@ -132,3 +132,43 @@ export async function isDayFullyBooked(
   const slots = await getAvailableSlotsFor4hr(toolId, date, settings);
   return slots.every((s) => !s.available);
 }
+
+export async function getAvailableSlotsForMultiTools(
+  toolIds: string[],
+  date: Date,
+  settings: Settings
+): Promise<Array<{ start: Date; end: Date; label: string; available: boolean }>> {
+  if (toolIds.length === 0) return [];
+
+  // Get slots for first tool as baseline
+  const slots = await getAvailableSlotsFor4hr(toolIds[0], date, settings);
+
+  // For each slot, check if ALL tools are available
+  const availability = await Promise.all(
+    toolIds.map((id) => getAvailableSlotsFor4hr(id, date, settings))
+  );
+
+  return slots.map((slot, idx) => {
+    // A slot is available only if ALL tools have this slot available
+    const allAvailable = availability.every((toolSlots) => {
+      const matchingSlot = toolSlots[idx];
+      return matchingSlot && matchingSlot.available;
+    });
+    return { ...slot, available: allAvailable };
+  });
+}
+
+export async function isFullDayAvailableForMultiTools(
+  toolIds: string[],
+  date: Date,
+  settings: Settings
+): Promise<boolean> {
+  if (toolIds.length === 0) return false;
+
+  // Check if ALL tools are available for the full day
+  const availability = await Promise.all(
+    toolIds.map((id) => isFullDayAvailable(id, date, settings))
+  );
+
+  return availability.every((avail) => avail);
+}

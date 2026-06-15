@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, type Booking, type Settings } from '@/lib/supabase';
 import { useCart } from '@/contexts/CartContext';
-import { ChevronLeft } from 'lucide-react';
+import { getAvailableSlotsForMultiTools, isFullDayAvailableForMultiTools } from '@/lib/availability';
+import { ChevronLeft, AlertCircle } from 'lucide-react';
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -22,6 +23,10 @@ const CheckoutPage = () => {
     marketingOptIn: false,
   });
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<
+    Array<{ start: Date; end: Date; label: string; available: boolean }>
+  >([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -31,6 +36,45 @@ const CheckoutPage = () => {
     };
     loadSettings();
   }, []);
+
+  // Fetch available slots when date or hire type changes
+  useEffect(() => {
+    const fetchAvailableSlots = async () => {
+      if (!selectedDate || !hireType || !settings) return;
+
+      setLoadingSlots(true);
+      try {
+        const date = new Date(selectedDate);
+        const toolIds = cartState.items.map((item) => item.tool.id);
+
+        if (hireType === '1day') {
+          const available = await isFullDayAvailableForMultiTools(toolIds, date, settings);
+          if (available) {
+            setAvailableSlots([
+              {
+                start: date,
+                end: date,
+                label: `Full day (${settings.opening_time} – ${settings.closing_time})`,
+                available: true,
+              },
+            ]);
+          } else {
+            setAvailableSlots([]);
+          }
+        } else {
+          const slots = await getAvailableSlotsForMultiTools(toolIds, date, settings);
+          setAvailableSlots(slots);
+        }
+      } catch (error) {
+        console.error('Error fetching availability:', error);
+        setAvailableSlots([]);
+      } finally {
+        setLoadingSlots(false);
+      }
+    };
+
+    fetchAvailableSlots();
+  }, [selectedDate, hireType, settings, cartState.items]);
 
   if (cartState.items.length === 0) {
     return (
@@ -241,7 +285,7 @@ const CheckoutPage = () => {
         </div>
       )}
 
-      {/* Stage 2: Date & Time - TODO: Implement availability checking */}
+      {/* Stage 2: Date & Time */}
       {stage === 'datetime' && (
         <div className="space-y-6">
           <div className="bg-white rounded-2xl p-6 shadow-md">
@@ -263,43 +307,67 @@ const CheckoutPage = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Time
-                </label>
-                <select
-                  value={selectedTime}
-                  onChange={(e) => setSelectedTime(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
-                >
-                  <option value="">Select a time</option>
-                  {settings &&
-                    (() => {
-                      const times = [];
-                      const [openHour] = settings.opening_time.split(':').map(Number);
-                      const [closeHour] = settings.closing_time.split(':').map(Number);
+              {/* Time slots display */}
+              {selectedDate && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Available Times
+                  </label>
 
-                      for (let h = openHour; h < closeHour; h++) {
-                        times.push(
-                          <option key={`${h}:00`} value={`${h}:00`}>
-                            {`${h.toString().padStart(2, '0')}:00`}
-                          </option>
-                        );
-                        times.push(
-                          <option key={`${h}:30`} value={`${h}:30`}>
-                            {`${h.toString().padStart(2, '0')}:30`}
-                          </option>
-                        );
-                      }
-                      return times;
-                    })()}
-                </select>
-              </div>
+                  {loadingSlots ? (
+                    <div className="text-center py-4 text-gray-500">
+                      Checking availability...
+                    </div>
+                  ) : availableSlots.length === 0 ? (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex gap-3">
+                      <AlertCircle className="text-amber-600 shrink-0 mt-0.5" size={18} />
+                      <div>
+                        <p className="font-semibold text-amber-900">No availability</p>
+                        <p className="text-sm text-amber-800 mt-1">
+                          {hireType === '4hr'
+                            ? 'No 4-hour slots available for all selected tools on this date.'
+                            : 'Full-day hire not available for all selected tools on this date.'}
+                        </p>
+                        <p className="text-sm text-amber-800 mt-1">Try another date or remove some items from your cart.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {availableSlots.map((slot, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            const slotTime = `${slot.start.getHours().toString().padStart(2, '0')}:${slot.start
+                              .getMinutes()
+                              .toString()
+                              .padStart(2, '0')}`;
+                            setSelectedTime(slotTime);
+                          }}
+                          disabled={!slot.available}
+                          className={`py-3 px-3 rounded-lg font-medium text-sm transition-colors ${
+                            slot.available
+                              ? selectedTime ===
+                                `${slot.start.getHours().toString().padStart(2, '0')}:${slot.start
+                                  .getMinutes()
+                                  .toString()
+                                  .padStart(2, '0')}`
+                                ? 'bg-brand-green text-white'
+                                : 'bg-green-50 text-brand-green hover:bg-green-100 border border-brand-green'
+                              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          }`}
+                        >
+                          {hireType === '1day' ? 'Full Day' : slot.label.split(' ')[0]}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <button
               onClick={() => setStage('customer')}
-              disabled={!selectedDate || !selectedTime}
+              disabled={!selectedDate || !selectedTime || availableSlots.length === 0}
               className="w-full mt-6 bg-brand-green text-white font-bold py-3 px-4 rounded-xl hover:bg-brand-green-dark disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
               Continue
