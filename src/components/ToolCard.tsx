@@ -11,9 +11,15 @@ interface ToolCardProps {
 const ToolCard = ({ tool, categoryName }: ToolCardProps) => {
   const { state, dispatch } = useCart();
   const [addedToCart, setAddedToCart] = useState(false);
-  const [selectedHireType, setSelectedHireType] = useState<'4hr' | '1day'>(state.hireType);
+  const [selectedHireType, setSelectedHireType] = useState<'4hr' | '1day' | null>(null);
+  const [showDurationError, setShowDurationError] = useState(false);
 
   const handleAddToCart = () => {
+    if (!selectedHireType) {
+      setShowDurationError(true);
+      setTimeout(() => setShowDurationError(false), 3000);
+      return;
+    }
     dispatch({ type: 'SET_HIRE_TYPE', hireType: selectedHireType });
     dispatch({ type: 'ADD_ITEM', tool });
     setAddedToCart(true);
@@ -59,10 +65,12 @@ const ToolCard = ({ tool, categoryName }: ToolCardProps) => {
 
         {/* Hire type selector */}
         <div className="mt-auto mb-3">
-          <p className="text-xs font-semibold text-gray-600 mb-2">Select Duration</p>
-          <div className="flex rounded-xl overflow-hidden border border-gray-200">
+          <p className={`text-xs font-semibold mb-2 ${showDurationError ? 'text-red-600' : 'text-gray-600'}`}>
+            {showDurationError ? '⚠ Please select a duration first' : 'Select Duration'}
+          </p>
+          <div className={`flex rounded-xl overflow-hidden border ${showDurationError ? 'border-red-400' : 'border-gray-200'}`}>
             <button
-              onClick={() => setSelectedHireType('4hr')}
+              onClick={() => { setSelectedHireType('4hr'); setShowDurationError(false); }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-semibold transition-colors ${
                 selectedHireType === '4hr'
                   ? 'bg-brand-green text-white'
@@ -73,7 +81,7 @@ const ToolCard = ({ tool, categoryName }: ToolCardProps) => {
               4hr — £{Number(tool.price_4hr).toFixed(2)}
             </button>
             <button
-              onClick={() => setSelectedHireType('1day')}
+              onClick={() => { setSelectedHireType('1day'); setShowDurationError(false); }}
               className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-semibold transition-colors border-l border-gray-200 ${
                 selectedHireType === '1day'
                   ? 'bg-brand-green text-white'
