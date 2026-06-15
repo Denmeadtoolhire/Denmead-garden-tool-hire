@@ -58,10 +58,10 @@ const Navbar = () => {
               )}
             </Link>
             <Link
-              to="/tools"
+              to="/booking/cart"
               className="bg-brand-gold text-brand-green font-bold text-sm px-5 py-2.5 rounded-lg hover:bg-yellow-400 transition-colors shadow-sm"
             >
-              Book Now
+              Complete Booking
             </Link>
           </div>
 
@@ -106,11 +106,11 @@ const Navbar = () => {
               )}
             </Link>
             <Link
-              to="/tools"
+              to="/booking/cart"
               onClick={() => setOpen(false)}
               className="mt-2 bg-brand-gold text-brand-green font-bold text-center py-3 rounded-lg hover:bg-yellow-400 transition-colors"
             >
-              Book Now
+              Complete Booking
             </Link>
           </div>
         )}
