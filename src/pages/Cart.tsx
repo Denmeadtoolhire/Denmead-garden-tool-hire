@@ -174,7 +174,7 @@ const CartPage = () => {
               to="/booking/checkout"
               className="block w-full bg-brand-green text-white font-bold py-4 px-4 rounded-xl text-center hover:bg-brand-green-dark transition-colors text-lg"
             >
-              Complete Booking
+              Next - Add Details
             </Link>
           </div>
         </div>
