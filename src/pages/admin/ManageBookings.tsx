@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/lib/supabase';
 import type { Booking, BookingItem } from '@/lib/supabase';
@@ -63,6 +64,10 @@ function getToolNames(b: BookingWithDetails): string {
 }
 
 const ManageBookings = () => {
+  const [searchParams] = useSearchParams();
+  const autoApproveId = searchParams.get('approve');
+  const autoSuggestId = searchParams.get('suggest');
+
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('pending');
@@ -89,6 +94,19 @@ const ManageBookings = () => {
   useEffect(() => {
     loadBookings();
   }, []);
+
+  useEffect(() => {
+    if (!bookings.length) return;
+    if (autoApproveId) {
+      const b = bookings.find(x => x.id === autoApproveId);
+      if (b) handleApprove(b as BookingWithDetails);
+    }
+    if (autoSuggestId) {
+      const b = bookings.find(x => x.id === autoSuggestId);
+      if (b) setAltBooking(b as BookingWithTool);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookings]);
 
   const loadBookings = async () => {
     setLoading(true);

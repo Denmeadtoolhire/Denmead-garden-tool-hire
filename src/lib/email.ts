@@ -363,10 +363,14 @@ export async function sendAdminNewRequestEmail(booking: Booking, tool: Tool): Pr
   if (!key) return;
 
   const dateTime = formatDateTime(booking.start_time, booking.end_time, booking.hire_type);
+  const origin = 'https://denmeadtoolhire.co.uk';
+  const adminUrl = `${origin}/admin/bookings`;
+  const approveUrl = `${origin}/admin/bookings?approve=${booking.id}`;
+  const suggestUrl = `${origin}/admin/bookings?suggest=${booking.id}`;
 
   const html = `
     ${baseHeader(`New Booking Request — ${tool.name}`)}
-    <p>A new booking request has been submitted.</p>
+    <p>A new booking request has been submitted. Use the buttons below to approve or suggest an alternative time.</p>
     <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <h3 style="color: #1a6b2f; margin-top: 0;">Request Details</h3>
       <table style="width: 100%; border-collapse: collapse;">
@@ -380,17 +384,31 @@ export async function sendAdminNewRequestEmail(booking: Booking, tool: Tool): Pr
       <table style="width: 100%; border-collapse: collapse;">
         <tr><td style="padding: 8px 0; color: #666; width: 35%;">Name:</td><td style="padding: 8px 0;">${booking.customer_name}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Email:</td><td style="padding: 8px 0;"><a href="mailto:${booking.customer_email}">${booking.customer_email}</a></td></tr>
-        <tr><td style="padding: 8px 0; color: #666;">Phone:</td><td style="padding: 8px 0;"><a href="tel:${booking.customer_phone}">${booking.customer_phone}</a></td></tr>
+        <tr><td style="padding: 8px 0; color: #666;">Phone:</td><td style="padding: 8px 0;"><a href="sms:${booking.customer_phone}">${booking.customer_phone}</a></td></tr>
         ${booking.notes ? `<tr><td style="padding: 8px 0; color: #666;">Notes:</td><td style="padding: 8px 0;">${booking.notes}</td></tr>` : ''}
       </table>
     </div>
-    <p>Log in to the admin panel to approve or suggest an alternative time.</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${approveUrl}"
+         style="display: inline-block; background: #1a6b2f; color: white; font-weight: bold; padding: 14px 32px; border-radius: 8px; text-decoration: none; margin: 8px; font-size: 16px;">
+        ✓ Approve Booking
+      </a>
+      <a href="${suggestUrl}"
+         style="display: inline-block; background: #f5c518; color: #1a6b2f; font-weight: bold; padding: 14px 32px; border-radius: 8px; text-decoration: none; margin: 8px; font-size: 16px;">
+        📅 Suggest Different Time
+      </a>
+    </div>
+
+    <p style="text-align: center; color: #666; font-size: 13px;">
+      Or <a href="${adminUrl}" style="color: #1a6b2f;">log in to the admin panel</a> to manage all bookings.
+    </p>
     ${baseFooter()}
   `;
 
   await sendEmail(key, {
     to: [ADMIN_EMAIL],
-    subject: `New Booking Request - ${tool.name}`,
+    subject: `New Booking Request - ${tool.name} - ${booking.customer_name}`,
     html,
   });
 }
