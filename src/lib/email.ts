@@ -220,6 +220,11 @@ export async function sendApprovalEmail(booking: Booking, tool: Tool): Promise<v
   // Google Maps link
   const mapsUrl = 'https://www.google.com/maps/search/1+Inhams+Lane+Denmead+PO7+6LX';
 
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://denmeadtoolhire.co.uk';
+  const cancelUrl = booking.response_token
+    ? `${origin}/booking/respond?token=${booking.response_token}&action=cancel`
+    : null;
+
   const html = `
     ${baseHeader('Booking Confirmed!')}
     <p>Hi ${booking.customer_name},</p>
@@ -259,7 +264,18 @@ export async function sendApprovalEmail(booking: Booking, tool: Tool): Promise<v
       </div>
     </div>
 
-    <p>If you need to cancel or have any questions, please call us on <strong>${PHONE}</strong> or email <strong>${ADMIN_EMAIL}</strong>.</p>
+    ${cancelUrl ? `
+    <div style="border: 1px solid #fca5a5; border-radius: 8px; padding: 15px; margin: 20px 0; background: #fff5f5;">
+      <p style="margin: 0 0 10px; font-weight: bold; color: #dc2626;">Need to cancel?</p>
+      <p style="margin: 0 0 12px; font-size: 14px; color: #666;">If your plans have changed, you can cancel your booking using the button below.</p>
+      <a href="${cancelUrl}"
+         style="display: inline-block; background: #dc2626; color: white; font-weight: bold; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-size: 14px;">
+        Cancel My Booking
+      </a>
+    </div>
+    ` : `<p>If you need to cancel, please call us on <strong>${PHONE}</strong> or email <strong>${ADMIN_EMAIL}</strong>.</p>`}
+
+    <p style="color: #666; font-size: 13px;">Questions? Call us on <strong>${PHONE}</strong> or email <strong>${ADMIN_EMAIL}</strong>.</p>
     ${baseFooter()}
   `;
 

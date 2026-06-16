@@ -165,7 +165,7 @@ const BookingConfirmationPage = () => {
           </ul>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 mb-4">
           <Link
             to="/tools"
             className="flex-1 text-center bg-brand-green text-white font-semibold py-3 rounded-xl hover:bg-brand-green-dark transition-colors"
@@ -179,6 +179,18 @@ const BookingConfirmationPage = () => {
             Home
           </Link>
         </div>
+
+        {booking.response_token && (
+          <p className="text-center text-sm text-gray-500">
+            Changed your mind?{' '}
+            <Link
+              to={`/booking/respond?token=${booking.response_token}&action=cancel`}
+              className="text-red-500 hover:underline font-medium"
+            >
+              Cancel this booking request
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );

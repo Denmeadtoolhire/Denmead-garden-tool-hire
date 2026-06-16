@@ -10,6 +10,8 @@ type State =
   | { type: 'loading' }
   | { type: 'accepted'; booking: Booking }
   | { type: 'declined' }
+  | { type: 'cancelled' }
+  | { type: 'confirm_cancel'; booking: Booking }
   | { type: 'already_used' }
   | { type: 'not_found' }
   | { type: 'error'; message: string };
@@ -17,12 +19,12 @@ type State =
 const BookingRespondPage = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
-  const action = searchParams.get('action') as 'accept' | 'decline' | null;
+  const action = searchParams.get('action') as 'accept' | 'decline' | 'cancel' | null;
 
   const [state, setState] = useState<State>({ type: 'loading' });
 
   useEffect(() => {
-    if (!token || (action !== 'accept' && action !== 'decline')) {
+    if (!token || (action !== 'accept' && action !== 'decline' && action !== 'cancel')) {
       setState({ type: 'not_found' });
       return;
     }
@@ -40,6 +42,16 @@ const BookingRespondPage = () => {
 
     if (error || !booking) {
       setState({ type: 'not_found' });
+      return;
+    }
+
+    if (action === 'cancel') {
+      if (booking.status === 'cancelled') {
+        setState({ type: 'already_used' });
+        return;
+      }
+      // Show confirmation screen before cancelling
+      setState({ type: 'confirm_cancel', booking: booking as Booking });
       return;
     }
 
@@ -89,6 +101,20 @@ const BookingRespondPage = () => {
 
       setState({ type: 'declined' });
     }
+  };
+
+  const handleConfirmCancel = async (booking: Booking) => {
+    setState({ type: 'loading' });
+    const { error } = await supabase
+      .from('bookings')
+      .update({ status: 'cancelled' })
+      .eq('id', booking.id);
+
+    if (error) {
+      setState({ type: 'error', message: 'Failed to cancel your booking. Please contact us.' });
+      return;
+    }
+    setState({ type: 'cancelled' });
   };
 
   if (state.type === 'loading') {
@@ -143,6 +169,77 @@ const BookingRespondPage = () => {
           <a href="tel:07889765153" className="text-brand-green font-semibold hover:underline">
             Call 07889765153
           </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.type === 'confirm_cancel') {
+    const { booking } = state;
+    const startDate = parseISO(booking.start_time);
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-2xl shadow-md p-8 text-center">
+            <AlertTriangle className="mx-auto text-amber-500 mb-4" size={48} />
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">Cancel Your Booking?</h1>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to cancel your booking for{' '}
+              <strong>{format(startDate, 'EEEE d MMMM yyyy')}</strong>?
+            </p>
+            <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left text-sm text-gray-700">
+              <p><strong>Ref:</strong> {booking.id.substring(0, 8).toUpperCase()}</p>
+              <p><strong>Date:</strong> {format(startDate, 'EEEE d MMMM yyyy')}</p>
+              <p><strong>Hire type:</strong> {booking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => handleConfirmCancel(booking)}
+                className="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition-colors"
+              >
+                Yes, Cancel Booking
+              </button>
+              <Link
+                to="/"
+                className="flex-1 border-2 border-gray-200 text-gray-700 font-semibold py-3 rounded-xl hover:bg-gray-50 transition-colors text-center"
+              >
+                Keep Booking
+              </Link>
+            </div>
+            <p className="text-xs text-gray-400 mt-4">
+              If you need to reschedule rather than cancel, please call us on{' '}
+              <a href="tel:07889765153" className="text-brand-green">07889765153</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (state.type === 'cancelled') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="max-w-md text-center">
+          <XCircle className="mx-auto text-red-400 mb-4" size={56} />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Booking Cancelled</h1>
+          <p className="text-gray-600 mb-6">
+            Your booking has been cancelled. If you change your mind, you're welcome to make a new
+            booking at any time.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Link
+              to="/tools"
+              className="bg-brand-green text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-brand-green-dark transition-colors"
+            >
+              Browse Tools
+            </Link>
+            <Link
+              to="/"
+              className="border-2 border-brand-green text-brand-green font-semibold px-6 py-2.5 rounded-xl hover:bg-green-50 transition-colors"
+            >
+              Home
+            </Link>
+          </div>
         </div>
       </div>
     );
