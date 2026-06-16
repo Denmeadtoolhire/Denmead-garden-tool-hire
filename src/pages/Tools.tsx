@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import type { Tool, Category } from '@/lib/supabase';
 import ToolCard from '@/components/ToolCard';
+import FloatingCartButton from '@/components/FloatingCartButton';
 import { Search, SlidersHorizontal, Package } from 'lucide-react';
 
 type ToolWithCategory = Tool & { categories: Category | null };
@@ -167,6 +168,7 @@ const ToolsPage = () => {
           </div>
         )}
       </div>
+      <FloatingCartButton />
     </div>
   );
 };

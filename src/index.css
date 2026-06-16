@@ -46,3 +46,17 @@ body {
 .card-hover:hover {
   transform: translateY(-4px);
 }
+
+/* Pulsing animation */
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.pulse-button {
+  animation: pulse-scale 1.5s ease-in-out infinite;
+}
