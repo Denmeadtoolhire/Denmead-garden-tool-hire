@@ -65,7 +65,7 @@ const ToolCard = ({ tool, categoryName }: ToolCardProps) => {
 
         {/* Hire type selector */}
         <div className="mt-auto mb-3">
-          <p className={`text-xs font-semibold mb-2 ${showDurationError ? 'text-red-600' : 'text-gray-600'}`}>
+          <p className={`text-xs font-bold text-center mb-2 ${showDurationError ? 'text-red-600' : 'text-gray-600'}`}>
             {showDurationError ? '⚠ Please select a duration first' : 'Select Duration'}
           </p>
           <div className={`flex rounded-xl overflow-hidden border ${showDurationError ? 'border-red-400' : 'border-gray-200'}`}>
