@@ -491,8 +491,12 @@ const CheckoutPage = () => {
               disabled={isSubmitting}
               className="w-full bg-brand-green text-white font-bold py-4 px-4 rounded-xl hover:bg-brand-green-dark disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-lg"
             >
-              {isSubmitting ? 'Creating Booking...' : 'Confirm & Request Booking'}
+              {isSubmitting ? 'Creating Booking...' : 'Send Booking Request'}
             </button>
+
+            <p className="text-center text-sm text-gray-600 mt-4">
+              Your booking request will be reviewed and a confirmation email will be sent to confirm your booking.
+            </p>
           </div>
         </div>
       )}
