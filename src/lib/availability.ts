@@ -54,13 +54,24 @@ export async function getAvailableSlotsFor4hr(
   const dayStart = startOfDay(date);
   const dayEnd = endOfDay(date);
 
-  const { data: bookings } = await supabase
-    .from('bookings')
-    .select('start_time, end_time')
-    .eq('tool_id', toolId)
-    .in('status', ['approved', 'pending'])
-    .gte('start_time', dayStart.toISOString())
-    .lte('end_time', dayEnd.toISOString());
+  // Check both legacy single-tool bookings and new multi-tool booking_items
+  const [{ data: legacyBookings }, { data: itemBookings }] = await Promise.all([
+    supabase
+      .from('bookings')
+      .select('start_time, end_time')
+      .eq('tool_id', toolId)
+      .in('status', ['approved', 'pending'])
+      .gte('start_time', dayStart.toISOString())
+      .lte('end_time', dayEnd.toISOString()),
+    supabase
+      .from('bookings')
+      .select('start_time, end_time, booking_items!inner(tool_id)')
+      .eq('booking_items.tool_id', toolId)
+      .in('status', ['approved', 'pending'])
+      .gte('start_time', dayStart.toISOString())
+      .lte('end_time', dayEnd.toISOString()),
+  ]);
+  const bookings = [...(legacyBookings ?? []), ...(itemBookings ?? [])];
 
   const { data: tool } = await supabase
     .from('tools')
@@ -102,13 +113,23 @@ export async function isFullDayAvailable(
 
   const quantity = tool?.quantity ?? 1;
 
-  const { data: bookings } = await supabase
-    .from('bookings')
-    .select('start_time, end_time')
-    .eq('tool_id', toolId)
-    .in('status', ['approved', 'pending'])
-    .gte('start_time', startOfDay(date).toISOString())
-    .lte('end_time', endOfDay(date).toISOString());
+  const [{ data: legacyBookings }, { data: itemBookings }] = await Promise.all([
+    supabase
+      .from('bookings')
+      .select('start_time, end_time')
+      .eq('tool_id', toolId)
+      .in('status', ['approved', 'pending'])
+      .gte('start_time', startOfDay(date).toISOString())
+      .lte('end_time', endOfDay(date).toISOString()),
+    supabase
+      .from('bookings')
+      .select('start_time, end_time, booking_items!inner(tool_id)')
+      .eq('booking_items.tool_id', toolId)
+      .in('status', ['approved', 'pending'])
+      .gte('start_time', startOfDay(date).toISOString())
+      .lte('end_time', endOfDay(date).toISOString()),
+  ]);
+  const bookings = [...(legacyBookings ?? []), ...(itemBookings ?? [])];
 
   const bookedCount = (bookings ?? []).filter((b) => {
     const bStart = parseISO(b.start_time);

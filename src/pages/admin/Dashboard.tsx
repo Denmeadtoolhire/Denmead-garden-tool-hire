@@ -21,11 +21,11 @@ const Dashboard = () => {
   const loadDashboard = async () => {
     const today = new Date();
     const [bookingsRes, todayRes, toolsRes, cancelledRes] = await Promise.all([
-      supabase.from('bookings').select('id', { count: 'exact' }).eq('status', 'confirmed'),
+      supabase.from('bookings').select('id', { count: 'exact' }).eq('status', 'approved'),
       supabase
         .from('bookings')
         .select('*, tools(name)')
-        .eq('status', 'confirmed')
+        .eq('status', 'approved')
         .gte('start_time', startOfDay(today).toISOString())
         .lte('start_time', endOfDay(today).toISOString())
         .order('start_time'),
