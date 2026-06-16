@@ -54,6 +54,7 @@ async function sendEmail(apiKey: string, payload: {
       subject: payload.subject,
       htmlContent: payload.html,
     };
+    console.log('Sending email via Brevo to:', payload.to, 'subject:', payload.subject);
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
@@ -62,8 +63,11 @@ async function sendEmail(apiKey: string, payload: {
       },
       body: JSON.stringify(brevoPayload),
     });
+    const responseText = await response.text();
     if (!response.ok) {
-      console.error('Failed to send email:', await response.text());
+      console.error('Failed to send email. Status:', response.status, 'Response:', responseText);
+    } else {
+      console.log('Email sent successfully:', responseText);
     }
   } catch (err) {
     console.error('Email send error:', err);
