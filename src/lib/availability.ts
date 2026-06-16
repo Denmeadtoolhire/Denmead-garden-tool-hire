@@ -58,7 +58,7 @@ export async function getAvailableSlotsFor4hr(
     .from('bookings')
     .select('start_time, end_time')
     .eq('tool_id', toolId)
-    .eq('status', 'confirmed')
+    .in('status', ['approved', 'pending'])
     .gte('start_time', dayStart.toISOString())
     .lte('end_time', dayEnd.toISOString());
 
@@ -106,7 +106,7 @@ export async function isFullDayAvailable(
     .from('bookings')
     .select('start_time, end_time')
     .eq('tool_id', toolId)
-    .eq('status', 'confirmed')
+    .in('status', ['approved', 'pending'])
     .gte('start_time', startOfDay(date).toISOString())
     .lte('end_time', endOfDay(date).toISOString());
 
