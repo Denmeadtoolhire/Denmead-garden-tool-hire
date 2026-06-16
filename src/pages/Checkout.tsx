@@ -482,7 +482,7 @@ const CheckoutPage = () => {
 
             {/* Total */}
             <div className="mb-6 flex justify-between text-lg font-bold">
-              <span>Total:</span>
+              <span>Total: <span className="text-sm font-normal text-gray-500">(Payment at pickup)</span></span>
               <span className="text-brand-green">£{cartTotal.toFixed(2)}</span>
             </div>
 
