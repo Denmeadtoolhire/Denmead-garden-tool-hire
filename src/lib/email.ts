@@ -412,3 +412,41 @@ export async function sendAdminNewRequestEmail(booking: Booking, tool: Tool): Pr
     html,
   });
 }
+
+/**
+ * Email 5: Sent to admin when a customer cancels their booking.
+ */
+export async function sendAdminCancellationEmail(booking: Booking): Promise<void> {
+  const key = getBrevoKey();
+  if (!key) return;
+
+  const dateTime = formatDateTime(booking.start_time, booking.end_time, booking.hire_type);
+
+  const html = `
+    ${baseHeader('Booking Cancelled by Customer')}
+    <p>A customer has cancelled their booking.</p>
+    <div style="background: white; border: 1px solid #fca5a5; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="color: #dc2626; margin-top: 0;">Cancelled Booking</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 8px 0; color: #666; width: 35%;">Reference:</td><td style="padding: 8px 0; font-family: monospace;">${booking.id.substring(0, 8).toUpperCase()}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666;">Date &amp; Time:</td><td style="padding: 8px 0;">${dateTime}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666;">Hire type:</td><td style="padding: 8px 0;">${booking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}</td></tr>
+      </table>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 16px 0;">
+      <h3 style="color: #1a6b2f; margin-top: 0;">Customer</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 8px 0; color: #666; width: 35%;">Name:</td><td style="padding: 8px 0;">${booking.customer_name}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666;">Email:</td><td style="padding: 8px 0;"><a href="mailto:${booking.customer_email}">${booking.customer_email}</a></td></tr>
+        <tr><td style="padding: 8px 0; color: #666;">Phone:</td><td style="padding: 8px 0;"><a href="sms:${booking.customer_phone}">${booking.customer_phone}</a></td></tr>
+      </table>
+    </div>
+    <p style="color: #666;">This slot is now free. No action needed unless you wish to follow up with the customer.</p>
+    ${baseFooter()}
+  `;
+
+  await sendEmail(key, {
+    to: [ADMIN_EMAIL],
+    subject: `Booking Cancelled - ${booking.customer_name} - ${booking.id.substring(0, 8).toUpperCase()}`,
+    html,
+  });
+}

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import type { Booking, Tool } from '@/lib/supabase';
-import { sendApprovalEmail } from '@/lib/email';
+import { sendApprovalEmail, sendAdminCancellationEmail } from '@/lib/email';
 import { format, parseISO } from 'date-fns';
 import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
@@ -114,6 +114,7 @@ const BookingRespondPage = () => {
       setState({ type: 'error', message: 'Failed to cancel your booking. Please contact us.' });
       return;
     }
+    sendAdminCancellationEmail(booking).catch(console.error);
     setState({ type: 'cancelled' });
   };
 
