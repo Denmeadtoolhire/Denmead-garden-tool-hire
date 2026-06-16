@@ -158,9 +158,14 @@ const ManageBookings = () => {
     if (error) {
       showFlash('Error approving booking.');
     } else {
-      // Send approval email (non-blocking)
-      if (b.tools) {
-        sendApprovalEmail(b, { ...b.tools, id: b.tool_id } as any);
+      // Send approval email — works for both single-tool and multi-tool bookings
+      const toolForEmail = b.tools
+        ? { ...b.tools, id: b.tool_id }
+        : b.booking_items?.[0]?.tools
+        ? { ...b.booking_items[0].tools, id: b.booking_items[0].tool_id }
+        : null;
+      if (toolForEmail) {
+        sendApprovalEmail(b, toolForEmail as any).catch(console.error);
       }
       showFlash(`Approved booking for ${b.customer_name}.`);
       await loadBookings();
@@ -174,8 +179,13 @@ const ManageBookings = () => {
     if (error) {
       showFlash('Error approving booking.');
     } else {
-      if (b.tools) {
-        sendApprovalEmail(b, { ...b.tools, id: b.tool_id } as any);
+      const toolForEmail = b.tools
+        ? { ...b.tools, id: b.tool_id }
+        : b.booking_items?.[0]?.tools
+        ? { ...b.booking_items[0].tools, id: b.booking_items[0].tool_id }
+        : null;
+      if (toolForEmail) {
+        sendApprovalEmail(b, toolForEmail as any).catch(console.error);
       }
       showFlash(`⚠️ Approved — this CLASHES with an existing approved booking!`);
       await loadBookings();
