@@ -125,10 +125,10 @@ const HomePage = () => {
               Browse &amp; Book Tools
             </Link>
             <a
-              href="tel:07889765153"
+              href="sms:07889765153"
               className="border-2 border-white/70 text-white font-bold px-8 py-4 rounded-xl text-lg hover:bg-white/10 transition-colors"
             >
-              Call Us: 07889 765153
+              Text Us On: 07889 765153
             </a>
           </div>
 
@@ -279,8 +279,11 @@ const HomePage = () => {
       <section className="bg-brand-green text-white py-16">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Ready to Hire?</h2>
-          <p className="text-green-200 text-lg mb-8 max-w-xl mx-auto">
-            Browse our full range and book online in minutes — or give us a call.
+          <p className="text-green-200 text-lg mb-2 max-w-xl mx-auto">
+            Browse our full range and book online in minutes.
+          </p>
+          <p className="text-green-100 text-base mb-8 max-w-xl mx-auto">
+            For any questions please text us on <strong>07889 765153</strong> and we will get back to you asap.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-10">
             <Link
@@ -297,8 +300,8 @@ const HomePage = () => {
             </div>
             <div className="flex items-center gap-2 justify-center">
               <Phone size={16} className="text-brand-gold" />
-              <a href="tel:07889765153" className="hover:text-white transition-colors">
-                07889 765153
+              <a href="sms:07889765153" className="hover:text-white transition-colors">
+                Text: 07889 765153
               </a>
             </div>
             <div className="flex items-center gap-2 justify-center">
