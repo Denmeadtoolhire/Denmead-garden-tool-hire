@@ -11,15 +11,16 @@ import type { Booking, Tool, Settings } from './supabase';
 import { supabase } from './supabase';
 import { format, parseISO } from 'date-fns';
 
-const FROM_ADDRESS = 'Denmead Tool Hire <denmeadtoolhire@gmail.com>';
+const FROM_ADDRESS = 'bookings@denmeadtoolhire.co.uk';
+const FROM_NAME = 'Denmead Tool Hire';
 const ADMIN_EMAIL = 'denmeadtoolhire@gmail.com';
 const PICKUP_ADDRESS = '1 Inhams Lane, Denmead, PO7 6LX';
 const PHONE = '07889765153';
 
-function getResendKey(): string | null {
-  const key = import.meta.env.VITE_RESEND_API_KEY;
+function getBrevoKey(): string | null {
+  const key = import.meta.env.VITE_BREVO_API_KEY;
   if (!key) {
-    console.warn('Resend API key not configured — email not sent');
+    console.warn('Brevo API key not configured — email not sent');
     return null;
   }
   return key;
@@ -39,15 +40,27 @@ async function getSettings(): Promise<Settings | null> {
   }
 }
 
-async function sendEmail(apiKey: string, payload: object): Promise<void> {
+async function sendEmail(apiKey: string, payload: {
+  to: string[];
+  subject: string;
+  html: string;
+  from?: string;
+  fromName?: string;
+}): Promise<void> {
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    const brevoPayload = {
+      sender: { name: payload.fromName || FROM_NAME, email: payload.from || FROM_ADDRESS },
+      to: payload.to.map(email => ({ email })),
+      subject: payload.subject,
+      htmlContent: payload.html,
+    };
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
+        'api-key': apiKey,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(brevoPayload),
     });
     if (!response.ok) {
       console.error('Failed to send email:', await response.text());
@@ -159,7 +172,7 @@ function generateOutlookUrl(
  * Email 1: Sent to customer when they submit a booking request.
  */
 export async function sendRequestReceivedEmail(booking: Booking, tool: Tool): Promise<void> {
-  const key = getResendKey();
+  const key = getBrevoKey();
   if (!key) return;
 
   const settings = await getSettings();
@@ -176,7 +189,6 @@ export async function sendRequestReceivedEmail(booking: Booking, tool: Tool): Pr
   `;
 
   await sendEmail(key, {
-    from: FROM_ADDRESS,
     to: [booking.customer_email],
     subject,
     html,
@@ -187,7 +199,7 @@ export async function sendRequestReceivedEmail(booking: Booking, tool: Tool): Pr
  * Email 2: Sent to customer when admin approves their booking.
  */
 export async function sendApprovalEmail(booking: Booking, tool: Tool): Promise<void> {
-  const key = getResendKey();
+  const key = getBrevoKey();
   if (!key) return;
 
   const settings = await getSettings();
@@ -280,7 +292,6 @@ export async function sendApprovalEmail(booking: Booking, tool: Tool): Promise<v
   `;
 
   await sendEmail(key, {
-    from: FROM_ADDRESS,
     to: [booking.customer_email],
     subject: 'Booking Confirmed! - Denmead Tool Hire',
     html,
@@ -298,7 +309,7 @@ export async function sendAlternativeSuggestionEmail(
   acceptUrl: string,
   declineUrl: string
 ): Promise<void> {
-  const key = getResendKey();
+  const key = getBrevoKey();
   if (!key) return;
 
   const settings = await getSettings();
@@ -334,7 +345,6 @@ export async function sendAlternativeSuggestionEmail(
   `;
 
   await sendEmail(key, {
-    from: FROM_ADDRESS,
     to: [booking.customer_email],
     subject,
     html,
@@ -345,7 +355,7 @@ export async function sendAlternativeSuggestionEmail(
  * Email 4: Sent to admin when a new booking request comes in.
  */
 export async function sendAdminNewRequestEmail(booking: Booking, tool: Tool): Promise<void> {
-  const key = getResendKey();
+  const key = getBrevoKey();
   if (!key) return;
 
   const dateTime = formatDateTime(booking.start_time, booking.end_time, booking.hire_type);
@@ -375,7 +385,6 @@ export async function sendAdminNewRequestEmail(booking: Booking, tool: Tool): Pr
   `;
 
   await sendEmail(key, {
-    from: FROM_ADDRESS,
     to: [ADMIN_EMAIL],
     subject: `New Booking Request - ${tool.name}`,
     html,
