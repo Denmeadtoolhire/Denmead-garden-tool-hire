@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase, type Booking, type Settings } from '@/lib/supabase';
 import { useCart } from '@/contexts/CartContext';
 import { getAvailableSlotsForMultiTools, isFullDayAvailableForMultiTools } from '@/lib/availability';
+import { sendRequestReceivedEmail, sendAdminNewRequestEmail } from '@/lib/email';
 import { ChevronLeft, AlertCircle } from 'lucide-react';
 
 const CheckoutPage = () => {
@@ -181,6 +182,11 @@ const CheckoutPage = () => {
         .insert(bookingItems);
 
       if (itemsError) throw itemsError;
+
+      // Send emails (fire and forget — don't block navigation on email failure)
+      const firstTool = cartState.items[0].tool;
+      sendRequestReceivedEmail(booking as Booking, firstTool).catch(console.error);
+      sendAdminNewRequestEmail(booking as Booking, firstTool).catch(console.error);
 
       // Clear cart and redirect
       cartDispatch({ type: 'CLEAR_CART' });
