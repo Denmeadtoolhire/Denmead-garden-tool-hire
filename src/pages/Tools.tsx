@@ -13,6 +13,9 @@ const ToolsPage = () => {
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState<string>('');
 
+  // Define category order
+  const categoryOrder = ['DIY', 'Garden', 'Home Tools'];
+
   useEffect(() => {
     loadData();
   }, []);
@@ -40,6 +43,15 @@ const ToolsPage = () => {
     const matchesCat = !selectedCat || t.category_id === selectedCat;
     return matchesSearch && matchesCat;
   });
+
+  // Group tools by category and sort by category order
+  const groupedTools = categories
+    .sort((a, b) => categoryOrder.indexOf(a.name) - categoryOrder.indexOf(b.name))
+    .map((cat) => ({
+      category: cat,
+      tools: filtered.filter((t) => t.category_id === cat.id),
+    }))
+    .filter((group) => group.tools.length > 0);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -85,11 +97,13 @@ const ToolsPage = () => {
                 className="pl-9 pr-8 py-3 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand-green appearance-none text-sm font-medium text-gray-700 min-w-[180px]"
               >
                 <option value="">All Categories</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
+                {categories
+                  .sort((a, b) => categoryOrder.indexOf(a.name) - categoryOrder.indexOf(b.name))
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
               </select>
             </div>
           </div>
@@ -133,13 +147,22 @@ const ToolsPage = () => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filtered.map((tool) => (
-              <ToolCard
-                key={tool.id}
-                tool={tool}
-                categoryName={tool.categories?.name}
-              />
+          <div className="space-y-10">
+            {groupedTools.map((group) => (
+              <div key={group.category.id}>
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 pb-3 border-b-2 border-brand-green">
+                  {group.category.name}
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {group.tools.map((tool) => (
+                    <ToolCard
+                      key={tool.id}
+                      tool={tool}
+                      categoryName={tool.categories?.name}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
