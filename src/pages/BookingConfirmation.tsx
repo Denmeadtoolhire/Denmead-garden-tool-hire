@@ -3,6 +3,7 @@ import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { Clock, Calendar, Mail } from 'lucide-react';
 import { supabase, type Booking, type Settings } from '@/lib/supabase';
+import { getDayOpeningTime, getDayClosingTime } from '@/lib/availability';
 import AddToHomeScreen from '@/components/AddToHomeScreen';
 
 const BookingConfirmationPage = () => {
@@ -146,7 +147,7 @@ const BookingConfirmationPage = () => {
                 </p>
                 <p className="font-medium text-gray-800">
                   {booking.hire_type === '1day'
-                    ? `Full day (${settings.opening_time} – ${settings.closing_time})`
+                    ? `Full day (${getDayOpeningTime(settings, startDate)} – ${getDayClosingTime(settings, startDate)})`
                     : `${format(startDate, 'HH:mm')} – ${format(endDate, 'HH:mm')}`}
                 </p>
                 <p className="text-sm text-gray-500">

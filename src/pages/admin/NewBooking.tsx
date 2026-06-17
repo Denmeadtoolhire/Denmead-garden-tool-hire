@@ -3,6 +3,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/lib/supabase';
 import type { Tool, Settings } from '@/lib/supabase';
 import { sendApprovalEmail } from '@/lib/email';
+import { getDayClosingTime } from '@/lib/availability';
 import { format, addHours } from 'date-fns';
 import { PlusCircle, Trash2 } from 'lucide-react';
 
@@ -72,7 +73,7 @@ const NewBooking = () => {
         ? addHours(start, 4)
         : (() => {
             const e = new Date(date);
-            const [ch, cm] = settings.closing_time.split(':').map(Number);
+            const [ch, cm] = getDayClosingTime(settings, start).split(':').map(Number);
             e.setHours(ch, cm, 0, 0);
             return e;
           })();

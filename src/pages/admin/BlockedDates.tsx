@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import AdminLayout from '@/components/AdminLayout';
+import { getDayOpeningTime, getDayClosingTime } from '@/lib/availability';
 import { Trash2, CalendarX } from 'lucide-react';
 
 interface BlockedPeriod {
@@ -14,6 +15,8 @@ interface BlockedPeriod {
 interface Settings {
   opening_time: string;
   closing_time: string;
+  opening_times: Record<string, string>;
+  closing_times: Record<string, string>;
 }
 
 const BlockedDates = () => {
@@ -36,7 +39,7 @@ const BlockedDates = () => {
     setLoading(true);
     const [{ data: periods }, { data: settingsData }] = await Promise.all([
       supabase.from('blocked_periods').select('*').order('start_time', { ascending: true }),
-      supabase.from('settings').select('opening_time, closing_time').single(),
+      supabase.from('settings').select('opening_time, closing_time, opening_times, closing_times').single(),
     ]);
     setBlockedPeriods(periods ?? []);
     if (settingsData) setSettings(settingsData);
@@ -72,8 +75,9 @@ const BlockedDates = () => {
         setSubmitting(false);
         return;
       }
-      startTime = `${form.date}T${settings.opening_time}:00`;
-      endTime = `${form.date}T${settings.closing_time}:00`;
+      const blockDate = new Date(form.date);
+      startTime = `${form.date}T${getDayOpeningTime(settings, blockDate)}:00`;
+      endTime = `${form.date}T${getDayClosingTime(settings, blockDate)}:00`;
     } else {
       if (!form.startTime || !form.endTime) {
         setError('Please provide start and end times');

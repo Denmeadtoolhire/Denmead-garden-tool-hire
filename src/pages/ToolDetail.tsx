@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import type { Tool, Settings } from '@/lib/supabase';
 import BookingCalendar from '@/components/BookingCalendar';
-import { getAvailableSlotsFor4hr, isFullDayAvailable, setTimeOnDate } from '@/lib/availability';
+import { getAvailableSlotsFor4hr, isFullDayAvailable, setTimeOnDate, getDayOpeningTime, getDayClosingTime } from '@/lib/availability';
 import { sendRequestReceivedEmail, sendAdminNewRequestEmail } from '@/lib/email';
 import { format } from 'date-fns';
 import { Clock, Calendar, Package, CheckCircle, ArrowLeft } from 'lucide-react';
@@ -132,8 +132,8 @@ const ToolDetailPage = () => {
         startTime = selectedSlot.start;
         endTime = selectedSlot.end;
       } else {
-        startTime = setTimeOnDate(selectedDate, settings.opening_time);
-        endTime = setTimeOnDate(selectedDate, settings.closing_time);
+        startTime = setTimeOnDate(selectedDate, getDayOpeningTime(settings, selectedDate));
+        endTime = setTimeOnDate(selectedDate, getDayClosingTime(settings, selectedDate));
       }
 
       const { data: booking, error: bookingError } = await supabase
@@ -319,7 +319,7 @@ const ToolDetailPage = () => {
                             <strong>{format(selectedDate, 'EEEE d MMMM yyyy')}</strong>
                           </p>
                           <p className="text-sm text-gray-600 mt-1">
-                            {settings.opening_time} – {settings.closing_time}
+                            {getDayOpeningTime(settings, selectedDate)} – {getDayClosingTime(settings, selectedDate)}
                           </p>
                         </div>
                         <button
@@ -481,7 +481,7 @@ const ToolDetailPage = () => {
                     <span className="text-gray-600">Time:</span>
                     <span className="font-medium">
                       {hireType === '1day'
-                        ? `${settings.opening_time} – ${settings.closing_time} (Full day)`
+                        ? `${getDayOpeningTime(settings, selectedDate)} – ${getDayClosingTime(settings, selectedDate)} (Full day)`
                         : selectedSlot?.label}
                     </span>
                   </div>

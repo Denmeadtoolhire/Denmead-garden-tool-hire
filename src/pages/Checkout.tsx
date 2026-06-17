@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, type Booking, type Settings } from '@/lib/supabase';
 import { useCart } from '@/contexts/CartContext';
-import { getAvailableSlotsForMultiTools, isFullDayAvailableForMultiTools } from '@/lib/availability';
+import { getAvailableSlotsForMultiTools, isFullDayAvailableForMultiTools, getDayOpeningTime, getDayClosingTime, setTimeOnDate } from '@/lib/availability';
 import { sendRequestReceivedEmail, sendAdminNewRequestEmail } from '@/lib/email';
 import { ChevronLeft, AlertCircle, X } from 'lucide-react';
 
@@ -85,11 +85,14 @@ const CheckoutPage = () => {
         if (hireType === '1day') {
           const available = await isFullDayAvailableForMultiTools(toolIds, date, settings);
           if (available) {
+            const openTime = getDayOpeningTime(settings, date);
+            const closeTime = getDayClosingTime(settings, date);
+            const openDate = setTimeOnDate(date, openTime);
             setAvailableSlots([
               {
-                start: date,
+                start: openDate,
                 end: date,
-                label: `Full day (${settings.opening_time} – ${settings.closing_time})`,
+                label: `Full day (${openTime} – ${closeTime})`,
                 available: true,
               },
             ]);
@@ -143,7 +146,8 @@ const CheckoutPage = () => {
       if (hireType === '4hr') {
         endTime.setHours(endTime.getHours() + 4);
       } else {
-        endTime.setHours(settings.closing_time.split(':')[0], 0, 0);
+        const [ch, cm] = getDayClosingTime(settings, startTime).split(':').map(Number);
+        endTime.setHours(ch, cm, 0, 0);
       }
 
       // Get or create customer

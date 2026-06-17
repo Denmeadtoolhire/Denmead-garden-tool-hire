@@ -55,6 +55,8 @@ const SettingsPage = () => {
       .update({
         opening_time: settings.opening_time,
         closing_time: settings.closing_time,
+        opening_times: settings.opening_times ?? {},
+        closing_times: settings.closing_times ?? {},
         open_days: settings.open_days,
         min_notice_hours: settings.min_notice_hours,
         turnaround_minutes: settings.turnaround_minutes ?? 30,
@@ -114,6 +116,24 @@ const SettingsPage = () => {
     setSettings({ ...settings, open_days: days });
   };
 
+  const setDayOpeningTime = (dayIdx: number, time: string) => {
+    if (!settings) return;
+    const key = dayIdx.toString();
+    setSettings({
+      ...settings,
+      opening_times: { ...(settings.opening_times ?? {}), [key]: time },
+    });
+  };
+
+  const setDayClosingTime = (dayIdx: number, time: string) => {
+    if (!settings) return;
+    const key = dayIdx.toString();
+    setSettings({
+      ...settings,
+      closing_times: { ...(settings.closing_times ?? {}), [key]: time },
+    });
+  };
+
   if (loading || !settings) {
     return (
       <AdminLayout>
@@ -130,12 +150,16 @@ const SettingsPage = () => {
         <div className="space-y-6">
           {/* Business hours */}
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-            <h2 className="font-semibold text-gray-800 mb-4">Opening Hours</h2>
+            <h2 className="font-semibold text-gray-800 mb-1">Opening Hours</h2>
+            <p className="text-xs text-gray-500 mb-4">
+              Set default open/close times, then override per day as needed.
+            </p>
 
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            {/* Default fallback times */}
+            <div className="grid grid-cols-2 gap-4 mb-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Opening Time
+                  Default Opening Time
                 </label>
                 <select
                   value={settings.opening_time}
@@ -153,7 +177,7 @@ const SettingsPage = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Closing Time
+                  Default Closing Time
                 </label>
                 <select
                   value={settings.closing_time}
@@ -171,27 +195,91 @@ const SettingsPage = () => {
               </div>
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Open Days</label>
-              <div className="flex gap-2 flex-wrap">
-                {DAY_NAMES.map((name, idx) => (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => toggleDay(idx)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-colors ${
-                      settings.open_days.includes(idx)
-                        ? 'border-brand-green bg-brand-green text-white'
-                        : 'border-gray-200 text-gray-600 hover:border-brand-green'
-                    }`}
-                  >
-                    {name}
-                  </button>
-                ))}
-              </div>
+            {/* Per-day table */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden mb-5">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600 text-xs uppercase">
+                  <tr>
+                    <th className="text-left px-4 py-2 font-semibold">Day</th>
+                    <th className="text-left px-4 py-2 font-semibold">Status</th>
+                    <th className="text-left px-4 py-2 font-semibold">Open</th>
+                    <th className="text-left px-4 py-2 font-semibold">Close</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {DAY_NAMES.map((name, idx) => {
+                    const isOpen = settings.open_days.includes(idx);
+                    const openVal =
+                      (settings.opening_times ?? {})[idx.toString()] ||
+                      settings.opening_time;
+                    const closeVal =
+                      (settings.closing_times ?? {})[idx.toString()] ||
+                      settings.closing_time;
+                    return (
+                      <tr
+                        key={name}
+                        className={isOpen ? '' : 'bg-gray-50 opacity-60'}
+                      >
+                        <td className="px-4 py-2 font-medium text-gray-800">{name}</td>
+                        <td className="px-4 py-2">
+                          <button
+                            type="button"
+                            onClick={() => toggleDay(idx)}
+                            className={`px-3 py-1 rounded-lg text-xs font-semibold border-2 transition-colors ${
+                              isOpen
+                                ? 'border-brand-green bg-brand-green text-white'
+                                : 'border-gray-200 text-gray-500 hover:border-brand-green'
+                            }`}
+                          >
+                            {isOpen ? 'Open' : 'Closed'}
+                          </button>
+                        </td>
+                        <td className="px-4 py-2">
+                          {isOpen ? (
+                            <select
+                              value={openVal}
+                              onChange={(e) =>
+                                setDayOpeningTime(idx, e.target.value)
+                              }
+                              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
+                            >
+                              {TIME_OPTIONS.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                  {o.label}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="text-gray-400 text-xs">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2">
+                          {isOpen ? (
+                            <select
+                              value={closeVal}
+                              onChange={(e) =>
+                                setDayClosingTime(idx, e.target.value)
+                              }
+                              className="border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
+                            >
+                              {TIME_OPTIONS.map((o) => (
+                                <option key={o.value} value={o.value}>
+                                  {o.label}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="text-gray-400 text-xs">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
 
-            <div>
+            <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Minimum Notice (hours)
               </label>

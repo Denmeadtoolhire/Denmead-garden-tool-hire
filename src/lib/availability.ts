@@ -13,9 +13,19 @@ export function setTimeOnDate(date: Date, timeStr: string): Date {
   return setMilliseconds(setSeconds(setMinutes(setHours(date, hours), minutes), 0), 0);
 }
 
+export function getDayOpeningTime(settings: Settings, date: Date): string {
+  const day = date.getDay().toString();
+  return (settings.opening_times?.[day]) || settings.opening_time;
+}
+
+export function getDayClosingTime(settings: Settings, date: Date): string {
+  const day = date.getDay().toString();
+  return (settings.closing_times?.[day]) || settings.closing_time;
+}
+
 export function generateHourlySlots(date: Date, settings: Settings): Array<{ start: Date; end: Date; label: string }> {
-  const open = setTimeOnDate(date, settings.opening_time);
-  const close = setTimeOnDate(date, settings.closing_time);
+  const open = setTimeOnDate(date, getDayOpeningTime(settings, date));
+  const close = setTimeOnDate(date, getDayClosingTime(settings, date));
   const lastStart = addHours(close, -4);
   const slots: Array<{ start: Date; end: Date; label: string }> = [];
 
@@ -113,8 +123,8 @@ export async function isFullDayAvailable(
   date: Date,
   settings: Settings
 ): Promise<boolean> {
-  const open = setTimeOnDate(date, settings.opening_time);
-  const close = setTimeOnDate(date, settings.closing_time);
+  const open = setTimeOnDate(date, getDayOpeningTime(settings, date));
+  const close = setTimeOnDate(date, getDayClosingTime(settings, date));
 
   const [{ data: tool }, { data: blockedPeriods }, { data: legacyBookings }, { data: itemBookings }] = await Promise.all([
     supabase.from('tools').select('quantity').eq('id', toolId).single(),

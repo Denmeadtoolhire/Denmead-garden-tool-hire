@@ -65,6 +65,8 @@ export type Settings = {
   email: string;
   opening_time: string;
   closing_time: string;
+  opening_times: Record<string, string>;
+  closing_times: Record<string, string>;
   min_notice_hours: number;
   turnaround_minutes: number;
   open_days: number[];
