@@ -6,13 +6,37 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-let deferredPrompt: BeforeInstallPromptEvent | null = null;
+// Store the event globally so it survives across renders
+let _deferredPrompt: BeforeInstallPromptEvent | null = null;
+const _listeners: Array<(e: BeforeInstallPromptEvent | null) => void> = [];
+
+function setDeferredPrompt(e: BeforeInstallPromptEvent | null) {
+  _deferredPrompt = e;
+  _listeners.forEach((fn) => fn(e));
+}
 
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
-    deferredPrompt = e as BeforeInstallPromptEvent;
+    setDeferredPrompt(e as BeforeInstallPromptEvent);
   });
+  window.addEventListener('appinstalled', () => {
+    setDeferredPrompt(null);
+  });
+}
+
+function useInstallPrompt() {
+  const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(_deferredPrompt);
+  useEffect(() => {
+    _listeners.push(setPrompt);
+    // In case the event already fired before this component mounted
+    setPrompt(_deferredPrompt);
+    return () => {
+      const idx = _listeners.indexOf(setPrompt);
+      if (idx !== -1) _listeners.splice(idx, 1);
+    };
+  }, []);
+  return prompt;
 }
 
 function isIos(): boolean {
@@ -33,21 +57,18 @@ interface Props {
 }
 
 const AddToHomeScreen = ({ onClose }: Props) => {
+  const installPrompt = useInstallPrompt();
   const [ios] = useState(isIos());
   const [mobile] = useState(isMobile());
-  const [installed, setInstalled] = useState(false);
 
-  useEffect(() => {
-    if (isInStandaloneMode()) setInstalled(true);
-  }, []);
-
-  if (installed) return null;
+  // Don't show if already installed as standalone app
+  if (isInStandaloneMode()) return null;
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') deferredPrompt = null;
+    if (!installPrompt) return;
+    await installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') setDeferredPrompt(null);
     onClose();
   };
 
@@ -56,7 +77,9 @@ const AddToHomeScreen = ({ onClose }: Props) => {
   const description = mobile
     ? 'Save Denmead Tool Hire to your home screen for quick access next time you need to hire a tool.'
     : 'Install Denmead Tool Hire as an app on your desktop — it opens instantly without needing a browser.';
-  const icon = mobile ? <Smartphone className="text-brand-gold" size={24} /> : <Monitor className="text-brand-gold" size={24} />;
+  const icon = mobile
+    ? <Smartphone className="text-brand-gold" size={24} />
+    : <Monitor className="text-brand-gold" size={24} />;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black bg-opacity-50">
@@ -82,6 +105,7 @@ const AddToHomeScreen = ({ onClose }: Props) => {
         <p className="text-gray-600 text-sm mb-5">{description}</p>
 
         {ios ? (
+          // iOS Safari — manual instructions (no programmatic prompt available)
           <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 space-y-3">
             <p className="font-semibold text-gray-800">To add to your home screen:</p>
             <div className="flex items-center gap-3">
@@ -103,7 +127,8 @@ const AddToHomeScreen = ({ onClose }: Props) => {
               Got it, thanks!
             </button>
           </div>
-        ) : deferredPrompt ? (
+        ) : installPrompt ? (
+          // Android or desktop Chrome/Edge — native install prompt available
           <div className="space-y-3">
             <button
               onClick={handleInstall}
@@ -120,12 +145,19 @@ const AddToHomeScreen = ({ onClose }: Props) => {
             </button>
           </div>
         ) : (
-          <button
-            onClick={onClose}
-            className="w-full bg-brand-green text-white font-semibold py-3 rounded-xl hover:bg-brand-green-dark transition-colors"
-          >
-            Close
-          </button>
+          // Browser doesn't support install (e.g. Firefox, Safari desktop)
+          <div className="space-y-3">
+            <p className="text-sm text-gray-500 bg-gray-50 rounded-xl p-4">
+              Your browser doesn't support automatic install. In Chrome or Edge, look for the
+              <strong> install icon</strong> in the address bar to add this site to your desktop.
+            </p>
+            <button
+              onClick={onClose}
+              className="w-full bg-brand-green text-white font-semibold py-3 rounded-xl hover:bg-brand-green-dark transition-colors"
+            >
+              Close
+            </button>
+          </div>
         )}
       </div>
     </div>
