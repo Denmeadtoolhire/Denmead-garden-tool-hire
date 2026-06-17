@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Trash2, ShoppingCart, Clock, Calendar, PlusCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
+import { format, parseISO } from 'date-fns';
 
 const CartPage = () => {
   const { state, dispatch } = useCart();
@@ -126,6 +127,19 @@ const CartPage = () => {
                 </button>
               </div>
             </div>
+
+            {/* Selected date & time */}
+            {initialDate && initialTime && (
+              <div className="mb-5 pb-4 border-b border-gray-100">
+                <p className="text-xs font-semibold text-gray-500 mb-1">Selected Date &amp; Time</p>
+                <p className="text-sm font-bold text-gray-900">
+                  {format(parseISO(initialDate), 'EEEE d MMMM yyyy')}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {state.hireType === '1day' ? `From ${initialTime} (full day)` : initialTime}
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2 mb-4 pb-4 border-b border-gray-200">
               {state.items.map((item) => {
