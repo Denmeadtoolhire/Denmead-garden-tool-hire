@@ -105,27 +105,16 @@ const CartPage = () => {
           <div className="bg-white rounded-2xl shadow-md p-6 sticky top-20 lg:top-24">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h2>
 
-            {/* Hire type — read-only display since it was set in the modal */}
-            <div className="mb-5">
-              <p className="text-xs font-semibold text-gray-500 mb-2">Hire Type</p>
-              <div className="flex rounded-xl overflow-hidden border border-gray-200">
-                <button
-                  onClick={() => dispatch({ type: 'SET_HIRE_TYPE', hireType: '4hr' })}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-bold transition-colors ${
-                    state.hireType === '4hr' ? 'bg-brand-green text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <Clock size={14} /> 4 Hours
-                </button>
-                <button
-                  onClick={() => dispatch({ type: 'SET_HIRE_TYPE', hireType: '1day' })}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-bold transition-colors border-l border-gray-200 ${
-                    state.hireType === '1day' ? 'bg-brand-green text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
-                  }`}
-                >
-                  <Calendar size={14} /> Full Day
-                </button>
-              </div>
+            {/* Hire type — read-only, set in the availability modal */}
+            <div className="mb-5 pb-4 border-b border-gray-100">
+              <p className="text-xs font-semibold text-gray-500 mb-1">Hire Type</p>
+              <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                {state.hireType === '4hr' ? <><Clock size={14} /> 4 Hours</> : <><Calendar size={14} /> Full Day</>}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                To change hire type,{' '}
+                <Link to="/tools" className="text-brand-green underline">go back to browse tools</Link>.
+              </p>
             </div>
 
             {/* Selected date & time */}
