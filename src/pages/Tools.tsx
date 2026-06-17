@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import type { Tool, Category, Settings } from '@/lib/supabase';
 import ToolCard from '@/components/ToolCard';
 import FloatingCartButton from '@/components/FloatingCartButton';
-import { Search, SlidersHorizontal, Package } from 'lucide-react';
+import { Search, SlidersHorizontal, Package, MapPin } from 'lucide-react';
 
 type ToolWithCategory = Tool & { categories: Category | null };
 
@@ -69,6 +69,10 @@ const ToolsPage = () => {
           <p className="text-green-200 text-lg">
             Browse our full range and book online in minutes.
           </p>
+          <div className="mt-4 inline-flex items-center gap-2 bg-white/15 text-white text-sm font-medium px-4 py-2 rounded-full">
+            <MapPin size={15} />
+            Collection only — 1 Inhams Lane, Denmead, PO7 6LX
+          </div>
         </div>
       </div>
 
