@@ -141,7 +141,7 @@ const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
                     dispatch({ type: 'SET_HIRE_TYPE', hireType: calHireType });
                     dispatch({ type: 'ADD_ITEM', tool });
                     setShowAvailability(false);
-                    navigate('/booking/checkout', { state: { initialDate: format(date, 'yyyy-MM-dd') } });
+                    navigate('/booking/cart', { state: { initialDate: format(date, 'yyyy-MM-dd') } });
                   }}
                   weeksAhead={4}
                 />
