@@ -1,10 +1,10 @@
 /**
- * Email functions using the Resend API via direct fetch.
+ * Email functions using the Brevo API via direct fetch.
  *
- * IMPORTANT: VITE_RESEND_API_KEY is compiled into the frontend bundle and
+ * IMPORTANT: VITE_BREVO_API_KEY is compiled into the frontend bundle and
  * therefore visible to anyone who inspects the JS. These email functions
  * should ideally be moved to a Supabase Edge Function so the API key stays
- * server-side. For now they work via direct Resend API calls from the browser.
+ * server-side. For now they work via direct Brevo API calls from the browser.
  */
 
 import type { Booking, Tool, Settings } from './supabase';
@@ -110,13 +110,17 @@ function baseFooter(): string {
   `;
 }
 
-function bookingTable(booking: Booking, toolName: string): string {
+function bookingTable(booking: Booking, toolNames: string[]): string {
   const dateTime = formatDateTime(booking.start_time, booking.end_time, booking.hire_type);
+  const toolLabel = toolNames.length > 1 ? 'Tools' : 'Tool';
+  const toolValue = toolNames.length > 1
+    ? `<ul style="margin: 4px 0; padding-left: 18px;">${toolNames.map(n => `<li>${n}</li>`).join('')}</ul>`
+    : `<strong>${toolNames[0] ?? '—'}</strong>`;
   return `
     <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <h3 style="color: #1a6b2f; margin-top: 0;">Booking Details</h3>
       <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="padding: 8px 0; color: #666; width: 35%;">Tool:</td><td style="padding: 8px 0; font-weight: bold;">${toolName}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666; width: 35%; vertical-align: top;">${toolLabel}:</td><td style="padding: 8px 0;">${toolValue}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Date &amp; Time:</td><td style="padding: 8px 0;">${dateTime}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Hire type:</td><td style="padding: 8px 0;">${booking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Reference:</td><td style="padding: 8px 0; font-family: monospace;">${booking.id.substring(0, 8).toUpperCase()}</td></tr>
@@ -145,7 +149,7 @@ function generateGoogleCalendarUrl(
     text: title,
     dates: `${formatGoogleDate(startDate)}/${formatGoogleDate(endDate)}`,
     location: location,
-    details: 'Denmead Tool & Garden Hire Booking - Please collect your tool',
+    details: 'Denmead Tool & Garden Hire Booking - Please collect your tools',
   });
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
@@ -168,7 +172,7 @@ function generateOutlookUrl(
     enddt: formatOutlookDate(endDate),
     subject: title,
     location: location,
-    body: 'Denmead Tool & Garden Hire Booking - Please collect your tool',
+    body: 'Denmead Tool & Garden Hire Booking - Please collect your tools',
   });
 
   return `https://outlook.live.com/calendar/0/deeplink/compose?${params.toString()}`;
@@ -177,7 +181,7 @@ function generateOutlookUrl(
 /**
  * Email 1: Sent to customer when they submit a booking request.
  */
-export async function sendRequestReceivedEmail(booking: Booking, tool: Tool): Promise<void> {
+export async function sendRequestReceivedEmail(booking: Booking, toolNames: string[]): Promise<void> {
   const key = getBrevoKey();
   if (!key) return;
 
@@ -189,7 +193,7 @@ export async function sendRequestReceivedEmail(booking: Booking, tool: Tool): Pr
     ${baseHeader('Booking Request Received!')}
     <p>Hi ${booking.customer_name},</p>
     <p>${bodyText}</p>
-    ${bookingTable(booking, tool.name)}
+    ${bookingTable(booking, toolNames)}
     <p>If you need to get in touch urgently, please call us on <strong>${PHONE}</strong>.</p>
     ${baseFooter()}
   `;
@@ -204,38 +208,24 @@ export async function sendRequestReceivedEmail(booking: Booking, tool: Tool): Pr
 /**
  * Email 2: Sent to customer when admin approves their booking.
  */
-export async function sendApprovalEmail(booking: Booking, tool: Tool): Promise<void> {
+export async function sendApprovalEmail(booking: Booking, toolNames: string[]): Promise<void> {
   const key = getBrevoKey();
   if (!key) return;
 
   const settings = await getSettings();
   const subject = settings?.confirmation_email_subject || 'Your Booking is Confirmed - Denmead Tool Hire';
-  const bodyText = settings?.confirmation_email_body || 'Great news! Your booking has been confirmed. Please collect your tool at the time specified. We accept cash or card payment on collection.';
+  const bodyText = settings?.confirmation_email_body || 'Great news! Your booking has been confirmed. Please collect your tools at the time specified. We accept cash or card payment on collection.';
 
   const startDate = parseISO(booking.start_time);
   const endDate = parseISO(booking.end_time);
   const bookingRef = booking.id.substring(0, 8).toUpperCase();
+  const calendarTitle = toolNames.length > 1
+    ? `Tool Hire — ${toolNames.join(', ')}`
+    : toolNames[0] ?? 'Tool Hire';
 
-  // Google Calendar link
-  const googleCalendarUrl = generateGoogleCalendarUrl(
-    tool.name,
-    startDate,
-    endDate,
-    '1 Inhams Lane, Denmead, PO7 6LX'
-  );
-
-  // Outlook Calendar link
-  const outlookUrl = generateOutlookUrl(
-    tool.name,
-    startDate,
-    endDate,
-    '1 Inhams Lane, Denmead, PO7 6LX'
-  );
-
-  // iCalendar download link
+  const googleCalendarUrl = generateGoogleCalendarUrl(calendarTitle, startDate, endDate, '1 Inhams Lane, Denmead, PO7 6LX');
+  const outlookUrl = generateOutlookUrl(calendarTitle, startDate, endDate, '1 Inhams Lane, Denmead, PO7 6LX');
   const icsDownloadUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/booking-calendar/${booking.id}`;
-
-  // Google Maps link
   const mapsUrl = 'https://www.google.com/maps/search/1+Inhams+Lane+Denmead+PO7+6LX';
 
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://denmeadtoolhire.co.uk';
@@ -253,7 +243,7 @@ export async function sendApprovalEmail(booking: Booking, tool: Tool): Promise<v
       <p style="margin: 0; font-size: 28px; font-weight: bold; font-family: monospace;">${bookingRef}</p>
     </div>
 
-    ${bookingTable(booking, tool.name)}
+    ${bookingTable(booking, toolNames)}
 
     <div style="background: #fff3cd; border: 1px solid #f5c518; border-radius: 8px; padding: 15px; margin: 20px 0;">
       <strong>Collection address:</strong><br>
@@ -312,7 +302,7 @@ export async function sendApprovalEmail(booking: Booking, tool: Tool): Promise<v
  */
 export async function sendAlternativeSuggestionEmail(
   booking: Booking,
-  tool: Tool,
+  toolNames: string[],
   suggestedStart: string,
   suggestedEnd: string,
   acceptUrl: string,
@@ -327,6 +317,7 @@ export async function sendAlternativeSuggestionEmail(
 
   const originalDateTime = formatDateTime(booking.start_time, booking.end_time, booking.hire_type);
   const suggestedDateTime = formatDateTime(suggestedStart, suggestedEnd, booking.hire_type);
+  const toolDisplay = toolNames.join(', ');
 
   const html = `
     ${baseHeader('Alternative Time Suggested')}
@@ -336,7 +327,7 @@ export async function sendAlternativeSuggestionEmail(
     <p>Our suggested alternative:</p>
     <div style="background: white; border: 2px solid #1a6b2f; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
       <p style="font-size: 18px; font-weight: bold; color: #1a6b2f; margin: 0;">${suggestedDateTime}</p>
-      <p style="color: #666; margin: 8px 0 0;">${booking.hire_type === '4hr' ? '4 Hour hire' : 'Full Day hire'} — ${tool.name}</p>
+      <p style="color: #666; margin: 8px 0 0;">${booking.hire_type === '4hr' ? '4 Hour hire' : 'Full Day hire'} — ${toolDisplay}</p>
     </div>
     <p>Please let us know if this works for you:</p>
     <div style="text-align: center; margin: 30px 0;">
@@ -363,7 +354,7 @@ export async function sendAlternativeSuggestionEmail(
 /**
  * Email 4: Sent to admin when a new booking request comes in.
  */
-export async function sendAdminNewRequestEmail(booking: Booking, tool: Tool): Promise<void> {
+export async function sendAdminNewRequestEmail(booking: Booking, toolNames: string[]): Promise<void> {
   const key = getBrevoKey();
   if (!key) return;
 
@@ -372,14 +363,19 @@ export async function sendAdminNewRequestEmail(booking: Booking, tool: Tool): Pr
   const adminUrl = `${origin}/admin/bookings`;
   const approveUrl = `${origin}/admin/bookings?approve=${booking.id}`;
   const suggestUrl = `${origin}/admin/bookings?suggest=${booking.id}`;
+  const toolLabel = toolNames.length > 1 ? 'Tools' : 'Tool';
+  const toolValue = toolNames.length > 1
+    ? `<ul style="margin: 4px 0; padding-left: 18px;">${toolNames.map(n => `<li>${n}</li>`).join('')}</ul>`
+    : toolNames[0] ?? '—';
+  const subjectToolLabel = toolNames.join(', ');
 
   const html = `
-    ${baseHeader(`New Booking Request — ${tool.name}`)}
+    ${baseHeader(`New Booking Request — ${subjectToolLabel}`)}
     <p>A new booking request has been submitted. Use the buttons below to approve or suggest an alternative time.</p>
     <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <h3 style="color: #1a6b2f; margin-top: 0;">Request Details</h3>
       <table style="width: 100%; border-collapse: collapse;">
-        <tr><td style="padding: 8px 0; color: #666; width: 35%;">Tool:</td><td style="padding: 8px 0; font-weight: bold;">${tool.name}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666; width: 35%; vertical-align: top;">${toolLabel}:</td><td style="padding: 8px 0;">${toolValue}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Date &amp; Time:</td><td style="padding: 8px 0;">${dateTime}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Hire type:</td><td style="padding: 8px 0;">${booking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Reference:</td><td style="padding: 8px 0; font-family: monospace;">${booking.id.substring(0, 8).toUpperCase()}</td></tr>
@@ -413,7 +409,7 @@ export async function sendAdminNewRequestEmail(booking: Booking, tool: Tool): Pr
 
   await sendEmail(key, {
     to: [ADMIN_EMAIL],
-    subject: `New Booking Request - ${tool.name} - ${booking.customer_name}`,
+    subject: `New Booking Request - ${subjectToolLabel} - ${booking.customer_name}`,
     html,
   });
 }
@@ -421,11 +417,15 @@ export async function sendAdminNewRequestEmail(booking: Booking, tool: Tool): Pr
 /**
  * Email 5: Sent to admin when a customer cancels their booking.
  */
-export async function sendAdminCancellationEmail(booking: Booking): Promise<void> {
+export async function sendAdminCancellationEmail(booking: Booking, toolNames: string[] = []): Promise<void> {
   const key = getBrevoKey();
   if (!key) return;
 
   const dateTime = formatDateTime(booking.start_time, booking.end_time, booking.hire_type);
+  const toolLabel = toolNames.length > 1 ? 'Tools' : 'Tool';
+  const toolValue = toolNames.length > 1
+    ? `<ul style="margin: 4px 0; padding-left: 18px;">${toolNames.map(n => `<li>${n}</li>`).join('')}</ul>`
+    : toolNames[0] ?? '—';
 
   const html = `
     ${baseHeader('Booking Cancelled by Customer')}
@@ -434,6 +434,7 @@ export async function sendAdminCancellationEmail(booking: Booking): Promise<void
       <h3 style="color: #dc2626; margin-top: 0;">Cancelled Booking</h3>
       <table style="width: 100%; border-collapse: collapse;">
         <tr><td style="padding: 8px 0; color: #666; width: 35%;">Reference:</td><td style="padding: 8px 0; font-family: monospace;">${booking.id.substring(0, 8).toUpperCase()}</td></tr>
+        ${toolNames.length > 0 ? `<tr><td style="padding: 8px 0; color: #666; vertical-align: top;">${toolLabel}:</td><td style="padding: 8px 0;">${toolValue}</td></tr>` : ''}
         <tr><td style="padding: 8px 0; color: #666;">Date &amp; Time:</td><td style="padding: 8px 0;">${dateTime}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Hire type:</td><td style="padding: 8px 0;">${booking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}</td></tr>
       </table>

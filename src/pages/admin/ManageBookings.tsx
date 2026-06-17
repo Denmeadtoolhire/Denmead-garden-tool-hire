@@ -158,15 +158,10 @@ const ManageBookings = () => {
     if (error) {
       showFlash('Error approving booking.');
     } else {
-      // Send approval email — works for both single-tool and multi-tool bookings
-      const toolForEmail = b.tools
-        ? { ...b.tools, id: b.tool_id }
-        : b.booking_items?.[0]?.tools
-        ? { ...b.booking_items[0].tools, id: b.booking_items[0].tool_id }
-        : null;
-      if (toolForEmail) {
-        sendApprovalEmail(b, toolForEmail as any).catch(console.error);
-      }
+      const approvalToolNames = b.booking_items && b.booking_items.length > 0
+        ? b.booking_items.map(bi => bi.tools?.name ?? 'Unknown')
+        : b.tools ? [b.tools.name] : ['Unknown'];
+      sendApprovalEmail(b, approvalToolNames).catch(console.error);
       showFlash(`Approved booking for ${b.customer_name}.`);
       await loadBookings();
     }
@@ -179,14 +174,10 @@ const ManageBookings = () => {
     if (error) {
       showFlash('Error approving booking.');
     } else {
-      const toolForEmail = b.tools
-        ? { ...b.tools, id: b.tool_id }
-        : b.booking_items?.[0]?.tools
-        ? { ...b.booking_items[0].tools, id: b.booking_items[0].tool_id }
-        : null;
-      if (toolForEmail) {
-        sendApprovalEmail(b, toolForEmail as any).catch(console.error);
-      }
+      const clashToolNames = b.booking_items && b.booking_items.length > 0
+        ? b.booking_items.map(bi => bi.tools?.name ?? 'Unknown')
+        : b.tools ? [b.tools.name] : ['Unknown'];
+      sendApprovalEmail(b, clashToolNames).catch(console.error);
       showFlash(`⚠️ Approved — this CLASHES with an existing approved booking!`);
       await loadBookings();
     }
@@ -235,26 +226,20 @@ const ManageBookings = () => {
       .single();
 
     if (fresh && fresh.response_token) {
-      // Resolve tool — single-tool bookings have fresh.tools, multi-tool bookings use booking_items
-      const toolForEmail = fresh.tools
-        ? { ...fresh.tools, id: fresh.tool_id }
-        : fresh.booking_items?.[0]?.tools
-        ? { ...fresh.booking_items[0].tools, id: fresh.booking_items[0].tool_id }
-        : null;
-
-      if (toolForEmail) {
-        const origin = window.location.origin;
-        const acceptUrl = `${origin}/booking/respond?token=${fresh.response_token}&action=accept`;
-        const declineUrl = `${origin}/booking/respond?token=${fresh.response_token}&action=decline`;
-        sendAlternativeSuggestionEmail(
-          fresh as BookingWithTool,
-          toolForEmail as any,
-          suggestedStart.toISOString(),
-          suggestedEnd.toISOString(),
-          acceptUrl,
-          declineUrl
-        ).catch(console.error);
-      }
+      const altToolNames = fresh.booking_items && fresh.booking_items.length > 0
+        ? fresh.booking_items.map((bi: any) => bi.tools?.name ?? 'Unknown')
+        : fresh.tools ? [fresh.tools.name] : ['Unknown'];
+      const origin = window.location.origin;
+      const acceptUrl = `${origin}/booking/respond?token=${fresh.response_token}&action=accept`;
+      const declineUrl = `${origin}/booking/respond?token=${fresh.response_token}&action=decline`;
+      sendAlternativeSuggestionEmail(
+        fresh as BookingWithTool,
+        altToolNames,
+        suggestedStart.toISOString(),
+        suggestedEnd.toISOString(),
+        acceptUrl,
+        declineUrl
+      ).catch(console.error);
     }
 
     showFlash(`Alternative suggestion sent to ${altBooking.customer_name}.`);

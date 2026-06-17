@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import type { Booking, Tool } from '@/lib/supabase';
+import type { Booking } from '@/lib/supabase';
 import { sendApprovalEmail, sendAdminCancellationEmail } from '@/lib/email';
 import { format, parseISO } from 'date-fns';
 import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
@@ -36,7 +36,7 @@ const BookingRespondPage = () => {
     // Look up booking by response_token
     const { data: booking, error } = await supabase
       .from('bookings')
-      .select('*, tools(name, price_4hr, price_1day)')
+      .select('*, tools(name, price_4hr, price_1day), booking_items(tool_id, tools(name, price_4hr, price_1day))')
       .eq('response_token', token)
       .single();
 
@@ -75,15 +75,18 @@ const BookingRespondPage = () => {
         return;
       }
 
-      // Fetch updated booking for email
+      // Fetch updated booking for email (include booking_items for multi-tool bookings)
       const { data: updated } = await supabase
         .from('bookings')
-        .select('*, tools(name, price_4hr, price_1day)')
+        .select('*, tools(name, price_4hr, price_1day), booking_items(tool_id, tools(name, price_4hr, price_1day))')
         .eq('id', booking.id)
         .single();
 
-      if (updated?.tools) {
-        sendApprovalEmail(updated as Booking, { ...updated.tools, id: updated.tool_id } as unknown as Tool);
+      if (updated) {
+        const toolNames: string[] = updated.booking_items && updated.booking_items.length > 0
+          ? updated.booking_items.map((bi: any) => bi.tools?.name ?? 'Unknown')
+          : updated.tools ? [updated.tools.name] : ['Unknown'];
+        sendApprovalEmail(updated as Booking, toolNames).catch(console.error);
       }
 
       setState({ type: 'accepted', booking: updated as Booking });
@@ -114,7 +117,10 @@ const BookingRespondPage = () => {
       setState({ type: 'error', message: 'Failed to cancel your booking. Please contact us.' });
       return;
     }
-    sendAdminCancellationEmail(booking).catch(console.error);
+    const cancelToolNames: string[] = (booking as any).booking_items?.length > 0
+      ? (booking as any).booking_items.map((bi: any) => bi.tools?.name ?? 'Unknown')
+      : (booking as any).tools ? [(booking as any).tools.name] : [];
+    sendAdminCancellationEmail(booking, cancelToolNames).catch(console.error);
     setState({ type: 'cancelled' });
   };
 

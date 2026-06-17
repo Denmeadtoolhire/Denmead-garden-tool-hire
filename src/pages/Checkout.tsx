@@ -230,9 +230,9 @@ const CheckoutPage = () => {
       if (itemsError) throw itemsError;
 
       // Send emails (fire and forget — don't block navigation on email failure)
-      const firstTool = cartState.items[0].tool;
-      sendRequestReceivedEmail(booking as Booking, firstTool).catch(console.error);
-      sendAdminNewRequestEmail(booking as Booking, firstTool).catch(console.error);
+      const toolNames = cartState.items.map((i) => i.tool.name);
+      sendRequestReceivedEmail(booking as Booking, toolNames).catch(console.error);
+      sendAdminNewRequestEmail(booking as Booking, toolNames).catch(console.error);
 
       // Clear cart and redirect
       cartDispatch({ type: 'CLEAR_CART' });
