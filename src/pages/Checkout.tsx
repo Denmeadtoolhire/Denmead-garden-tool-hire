@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase, type Booking, type Settings } from '@/lib/supabase';
 import { useCart } from '@/contexts/CartContext';
 import { getAvailableSlotsForMultiTools, isFullDayAvailableForMultiTools, getDayOpeningTime, getDayClosingTime, setTimeOnDate } from '@/lib/availability';
@@ -42,10 +42,14 @@ Denmead Tool and Garden Hire Ltd, 1 Inhams Lane, Denmead, PO7 6LX. Tel: 07889765
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { state: cartState, dispatch: cartDispatch } = useCart();
   const hireType = cartState.hireType;
   const [stage, setStage] = useState<'datetime' | 'customer' | 'review'>('datetime');
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const initialDate = (location.state as any)?.initialDate;
+  const [selectedDate, setSelectedDate] = useState<string>(
+    initialDate ? new Date(initialDate).toISOString().split('T')[0] : ''
+  );
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [customerData, setCustomerData] = useState({
     name: '',

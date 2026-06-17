@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Clock, Calendar, Package, ShoppingCart, Check, X } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
+import { useNavigate } from 'react-router-dom';
 import type { Tool, Settings } from '@/lib/supabase';
 import BookingCalendar from '@/components/BookingCalendar';
 
@@ -12,6 +13,7 @@ interface ToolCardProps {
 
 const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
   const { state, dispatch } = useCart();
+  const navigate = useNavigate();
   const [addedToCart, setAddedToCart] = useState(false);
   const [selectedHireType, setSelectedHireType] = useState<'4hr' | '1day' | null>(null);
   const [showDurationError, setShowDurationError] = useState(false);
@@ -163,12 +165,18 @@ const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
               </button>
             </div>
 
+            <p className="text-xs text-gray-500 mb-3">Tap a green date to book it</p>
             <BookingCalendar
               toolId={tool.id}
               settings={settings}
               hireType={calHireType}
               selectedDate={null}
-              onSelectDate={() => {}}
+              onSelectDate={(date) => {
+                dispatch({ type: 'SET_HIRE_TYPE', hireType: calHireType });
+                dispatch({ type: 'ADD_ITEM', tool });
+                setShowAvailability(false);
+                navigate('/booking/checkout', { state: { initialDate: date.toISOString() } });
+              }}
               weeksAhead={4}
             />
           </div>

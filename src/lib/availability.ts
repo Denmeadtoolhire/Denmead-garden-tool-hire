@@ -126,6 +126,10 @@ export async function isFullDayAvailable(
   const open = setTimeOnDate(date, getDayOpeningTime(settings, date));
   const close = setTimeOnDate(date, getDayClosingTime(settings, date));
 
+  // Same min-notice check as 4hr slots — if opening time is too soon, not available
+  const minStart = addHours(new Date(), settings.min_notice_hours);
+  if (isBefore(open, minStart)) return false;
+
   const [{ data: tool }, { data: blockedPeriods }, { data: legacyBookings }, { data: itemBookings }] = await Promise.all([
     supabase.from('tools').select('quantity').eq('id', toolId).single(),
     supabase
