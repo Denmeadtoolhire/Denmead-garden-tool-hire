@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Trash2, Plus, Minus, ShoppingCart, Clock, Calendar } from 'lucide-react';
+import { Trash2, ShoppingCart, Clock, Calendar } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 
 const CartPage = () => {
@@ -64,35 +64,6 @@ const CartPage = () => {
                   <h3 className="text-lg font-bold text-gray-900 mb-1">{item.tool.name}</h3>
                   <p className="text-gray-500 text-sm mb-4">£{Number(item.tool.price_4hr).toFixed(2)} per 4hr</p>
 
-                  {/* Quantity controls */}
-                  <div className="flex items-center justify-center sm:justify-start gap-4">
-                    <button
-                      onClick={() =>
-                        dispatch({
-                          type: 'UPDATE_QUANTITY',
-                          toolId: item.tool.id,
-                          quantity: item.quantity - 1,
-                        })
-                      }
-                      disabled={item.quantity <= 1}
-                      className="w-10 h-10 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-                    >
-                      <Minus size={18} className="text-gray-600" />
-                    </button>
-                    <span className="font-semibold w-8 text-center text-lg">{item.quantity}</span>
-                    <button
-                      onClick={() =>
-                        dispatch({
-                          type: 'UPDATE_QUANTITY',
-                          toolId: item.tool.id,
-                          quantity: item.quantity + 1,
-                        })
-                      }
-                      className="w-10 h-10 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center"
-                    >
-                      <Plus size={18} className="text-gray-600" />
-                    </button>
-                  </div>
                 </div>
 
                 {/* Price and remove */}
