@@ -46,10 +46,13 @@ const CheckoutPage = () => {
   const location = useLocation();
   const { state: cartState, dispatch: cartDispatch } = useCart();
   const hireType = cartState.hireType;
-  const [stage, setStage] = useState<'datetime' | 'customer' | 'review'>('datetime');
+  const [stage, setStage] = useState<'datetime' | 'customer' | 'review'>(
+    initialDate && initialTime ? 'customer' : 'datetime'
+  );
   const initialDate = (location.state as any)?.initialDate ?? '';
+  const initialTime = (location.state as any)?.initialTime ?? '';
   const [selectedDate, setSelectedDate] = useState<string>(initialDate);
-  const [selectedTime, setSelectedTime] = useState<string>('');
+  const [selectedTime, setSelectedTime] = useState<string>(initialTime);
   const [customerData, setCustomerData] = useState({
     name: '',
     email: '',
@@ -249,12 +252,14 @@ const CheckoutPage = () => {
       <div className="flex items-center gap-3 mb-6 md:mb-8">
         <button
           onClick={() => {
-            if (stage === 'datetime') {
-              navigate('/booking/cart');
+            if (stage === 'review') {
+              setStage('customer');
+            } else if (stage === 'customer' && initialDate && initialTime) {
+              navigate('/booking/cart', { state: { initialDate, initialTime } });
+            } else if (stage === 'customer') {
+              setStage('datetime');
             } else {
-              setStage(
-                stage === 'customer' ? 'datetime' : 'customer'
-              );
+              navigate('/booking/cart', { state: { initialDate, initialTime } });
             }
           }}
           className="w-12 h-12 flex items-center justify-center hover:bg-gray-100 rounded-lg transition-colors shrink-0"

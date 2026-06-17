@@ -8,6 +8,7 @@ const CartPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const initialDate = (location.state as any)?.initialDate ?? '';
+  const initialTime = (location.state as any)?.initialTime ?? '';
 
   if (state.items.length === 0) {
     return (
@@ -147,7 +148,7 @@ const CartPage = () => {
             </p>
 
             <button
-              onClick={() => navigate('/booking/checkout', { state: { initialDate } })}
+              onClick={() => navigate('/booking/checkout', { state: { initialDate, initialTime } })}
               className="block w-full bg-brand-green text-white font-bold py-4 px-4 rounded-xl text-center hover:bg-brand-green-dark transition-colors text-lg"
             >
               Continue to Booking Details →
