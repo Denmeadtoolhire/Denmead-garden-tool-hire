@@ -4,6 +4,7 @@ import { supabase, type Booking, type Settings } from '@/lib/supabase';
 import { useCart } from '@/contexts/CartContext';
 import { getAvailableSlotsForMultiTools, isFullDayAvailableForMultiTools, getDayOpeningTime, getDayClosingTime, setTimeOnDate } from '@/lib/availability';
 import { sendRequestReceivedEmail, sendAdminNewRequestEmail } from '@/lib/email';
+import { format, parseISO } from 'date-fns';
 import { ChevronLeft, AlertCircle, X } from 'lucide-react';
 
 const TERMS_AND_CONDITIONS = `Denmead Tool and Garden Hire Ltd - Terms and Conditions
@@ -517,7 +518,7 @@ const CheckoutPage = () => {
               <div>
                 <span className="text-gray-600">Date & Time:</span>
                 <span className="font-semibold text-gray-900 ml-2">
-                  {new Date(selectedDate).toLocaleDateString()} at {selectedTime}
+                  {format(parseISO(selectedDate), 'dd/MM/yyyy')} at {selectedTime}
                 </span>
               </div>
               <div>
