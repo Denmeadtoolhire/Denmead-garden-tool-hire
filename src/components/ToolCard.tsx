@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, Calendar, Package, ShoppingCart, Check, X } from 'lucide-react';
+import { Clock, Calendar, Package, X } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -13,25 +13,10 @@ interface ToolCardProps {
 }
 
 const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
-  const { state, dispatch } = useCart();
+  const { dispatch } = useCart();
   const navigate = useNavigate();
-  const [addedToCart, setAddedToCart] = useState(false);
-  const [selectedHireType, setSelectedHireType] = useState<'4hr' | '1day' | null>(null);
-  const [showDurationError, setShowDurationError] = useState(false);
   const [showAvailability, setShowAvailability] = useState(false);
   const [calHireType, setCalHireType] = useState<'4hr' | '1day'>('4hr');
-
-  const handleAddToCart = () => {
-    if (!selectedHireType) {
-      setShowDurationError(true);
-      setTimeout(() => setShowDurationError(false), 3000);
-      return;
-    }
-    dispatch({ type: 'SET_HIRE_TYPE', hireType: selectedHireType });
-    dispatch({ type: 'ADD_ITEM', tool });
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
-  };
 
   return (
     <>
@@ -71,53 +56,26 @@ const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
             <p className="text-gray-500 text-sm mb-4 line-clamp-3 leading-relaxed">{tool.description}</p>
           )}
 
-          {/* Hire type selector */}
-          <div className="mt-auto mb-3">
-            <p className={`text-xs font-bold text-center mb-2 ${showDurationError ? 'text-red-600' : 'text-gray-600'}`}>
-              {showDurationError ? '⚠ Please select a duration first' : 'Select Duration'}
-            </p>
-            <div className={`flex rounded-xl overflow-hidden border ${showDurationError ? 'border-red-400' : 'border-gray-200'}`}>
-              <button
-                onClick={() => { setSelectedHireType('4hr'); setShowDurationError(false); }}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-semibold transition-colors ${
-                  selectedHireType === '4hr' ? 'bg-brand-green text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <Clock size={13} />
-                4hr — £{Number(tool.price_4hr).toFixed(2)}
-              </button>
-              <button
-                onClick={() => { setSelectedHireType('1day'); setShowDurationError(false); }}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-semibold transition-colors border-l border-gray-200 ${
-                  selectedHireType === '1day' ? 'bg-brand-green text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <Calendar size={13} />
-                Day — £{Number(tool.price_1day).toFixed(2)}
-              </button>
-            </div>
+          {/* Prices */}
+          <div className="mt-auto mb-4 flex gap-4">
+            <span className="flex items-center gap-1.5 text-sm text-gray-600">
+              <Clock size={13} />
+              4hr — <strong className="text-brand-green">£{Number(tool.price_4hr).toFixed(2)}</strong>
+            </span>
+            <span className="flex items-center gap-1.5 text-sm text-gray-600">
+              <Calendar size={13} />
+              Full day — <strong className="text-brand-green">£{Number(tool.price_1day).toFixed(2)}</strong>
+            </span>
           </div>
 
           {tool.is_available ? (
-            <div className="space-y-2">
-              <button
-                onClick={handleAddToCart}
-                className={`flex items-center justify-center gap-2 w-full font-bold py-3 px-4 rounded-xl transition-colors ${
-                  addedToCart ? 'bg-green-100 text-brand-green' : 'bg-brand-green text-white hover:bg-brand-green-dark'
-                }`}
-              >
-                {addedToCart ? <><Check size={16} />Added to Booking</> : <><ShoppingCart size={16} />Add to Booking</>}
-              </button>
-              {settings && (
-                <button
-                  onClick={() => setShowAvailability(true)}
-                  className="flex items-center justify-center gap-2 w-full font-semibold py-2.5 px-4 rounded-xl border-2 border-brand-green text-brand-green hover:bg-green-50 transition-colors text-sm"
-                >
-                  <Calendar size={15} />
-                  Quick View Availability
-                </button>
-              )}
-            </div>
+            <button
+              onClick={() => setShowAvailability(true)}
+              className="flex items-center justify-center gap-2 w-full font-bold py-3 px-4 rounded-xl bg-brand-green text-white hover:bg-brand-green-dark transition-colors"
+            >
+              <Calendar size={16} />
+              Check Availability &amp; Book
+            </button>
           ) : (
             <button disabled className="w-full text-center bg-gray-100 text-gray-400 font-semibold py-3 px-4 rounded-xl cursor-not-allowed">
               Unavailable
