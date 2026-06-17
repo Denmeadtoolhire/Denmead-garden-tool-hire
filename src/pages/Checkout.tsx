@@ -264,18 +264,32 @@ const CheckoutPage = () => {
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Checkout</h1>
       </div>
 
+      {/* Helpful navigation */}
+      <p className="text-sm text-gray-500 mb-4">
+        Need to add or remove tools?{' '}
+        <button
+          onClick={() => navigate('/booking/cart', { state: { initialDate } })}
+          className="text-brand-green font-semibold hover:underline"
+        >
+          ← Go back to your cart
+        </button>
+        {' '}or{' '}
+        <button
+          onClick={() => navigate('/tools')}
+          className="text-brand-green font-semibold hover:underline"
+        >
+          browse more tools
+        </button>
+        .
+      </p>
+
       {/* Hire type summary banner */}
       <div className="bg-green-50 border border-brand-green rounded-xl px-4 py-3 mb-4 flex items-center justify-between">
         <span className="text-brand-green font-semibold text-sm">
           Hire period: <strong>{hireType === '4hr' ? '4 Hours' : 'Full Day'}</strong>
           {' · '}Total: <strong>£{cartTotal.toFixed(2)}</strong>
+          {cartState.items.length > 1 ? ` · ${cartState.items.length} tools` : ''}
         </span>
-        <button
-          onClick={() => navigate('/booking/cart')}
-          className="text-xs text-brand-green underline font-medium"
-        >
-          Change
-        </button>
       </div>
 
       {/* Stage 1: Date & Time */}
