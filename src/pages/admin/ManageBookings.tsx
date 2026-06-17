@@ -227,25 +227,34 @@ const ManageBookings = () => {
       return;
     }
 
-    // Fetch fresh booking with response_token
+    // Fetch fresh booking with response_token (include booking_items for multi-tool bookings)
     const { data: fresh } = await supabase
       .from('bookings')
-      .select('*, tools(name, price_4hr, price_1day)')
+      .select('*, tools(name, price_4hr, price_1day), booking_items(tool_id, tools(name, price_4hr, price_1day))')
       .eq('id', altBooking.id)
       .single();
 
-    if (fresh && fresh.response_token && fresh.tools) {
-      const origin = window.location.origin;
-      const acceptUrl = `${origin}/booking/respond?token=${fresh.response_token}&action=accept`;
-      const declineUrl = `${origin}/booking/respond?token=${fresh.response_token}&action=decline`;
-      sendAlternativeSuggestionEmail(
-        fresh as BookingWithTool,
-        { ...fresh.tools, id: fresh.tool_id } as any,
-        suggestedStart.toISOString(),
-        suggestedEnd.toISOString(),
-        acceptUrl,
-        declineUrl
-      );
+    if (fresh && fresh.response_token) {
+      // Resolve tool — single-tool bookings have fresh.tools, multi-tool bookings use booking_items
+      const toolForEmail = fresh.tools
+        ? { ...fresh.tools, id: fresh.tool_id }
+        : fresh.booking_items?.[0]?.tools
+        ? { ...fresh.booking_items[0].tools, id: fresh.booking_items[0].tool_id }
+        : null;
+
+      if (toolForEmail) {
+        const origin = window.location.origin;
+        const acceptUrl = `${origin}/booking/respond?token=${fresh.response_token}&action=accept`;
+        const declineUrl = `${origin}/booking/respond?token=${fresh.response_token}&action=decline`;
+        sendAlternativeSuggestionEmail(
+          fresh as BookingWithTool,
+          toolForEmail as any,
+          suggestedStart.toISOString(),
+          suggestedEnd.toISOString(),
+          acceptUrl,
+          declineUrl
+        ).catch(console.error);
+      }
     }
 
     showFlash(`Alternative suggestion sent to ${altBooking.customer_name}.`);
