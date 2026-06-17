@@ -10,6 +10,8 @@ import {
   subMonths,
   startOfWeek,
   endOfWeek,
+  addWeeks,
+  isAfter,
 } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Settings } from '@/lib/supabase';
@@ -21,6 +23,7 @@ interface BookingCalendarProps {
   hireType: '4hr' | '1day';
   selectedDate: Date | null;
   onSelectDate: (date: Date) => void;
+  weeksAhead?: number;
 }
 
 const BookingCalendar = ({
@@ -29,8 +32,10 @@ const BookingCalendar = ({
   hireType,
   selectedDate,
   onSelectDate,
+  weeksAhead,
 }: BookingCalendarProps) => {
   const [viewMonth, setViewMonth] = useState(new Date());
+  const maxDate = weeksAhead ? addWeeks(new Date(), weeksAhead) : null;
   const [fullyBookedDates, setFullyBookedDates] = useState<Set<string>>(new Set());
   const [loadingDates, setLoadingDates] = useState(false);
 
@@ -66,6 +71,7 @@ const BookingCalendar = ({
 
   const getDayState = (day: Date): 'available' | 'booked' | 'unavailable' | 'selected' | 'past' => {
     if (selectedDate && isSameDay(day, selectedDate)) return 'selected';
+    if (maxDate && isAfter(day, maxDate)) return 'past';
     if (!isDateAvailableForBooking(day, settings)) return 'past';
     if (fullyBookedDates.has(format(day, 'yyyy-MM-dd'))) return 'booked';
     return 'available';
@@ -87,7 +93,8 @@ const BookingCalendar = ({
         <h3 className="font-semibold text-gray-800">{format(viewMonth, 'MMMM yyyy')}</h3>
         <button
           onClick={() => setViewMonth(addMonths(viewMonth, 1))}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          disabled={maxDate ? isAfter(startOfMonth(addMonths(viewMonth, 1)), maxDate) : false}
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
           aria-label="Next month"
         >
           <ChevronRight size={18} />

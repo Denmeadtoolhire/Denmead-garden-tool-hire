@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Tool, Category } from '@/lib/supabase';
+import type { Tool, Category, Settings } from '@/lib/supabase';
 import ToolCard from '@/components/ToolCard';
 import FloatingCartButton from '@/components/FloatingCartButton';
 import { Search, SlidersHorizontal, Package } from 'lucide-react';
@@ -10,6 +10,7 @@ type ToolWithCategory = Tool & { categories: Category | null };
 const ToolsPage = () => {
   const [tools, setTools] = useState<ToolWithCategory[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState<string>('');
@@ -22,17 +23,15 @@ const ToolsPage = () => {
   }, []);
 
   const loadData = async () => {
-    const [toolsRes, catsRes] = await Promise.all([
-      supabase
-        .from('tools')
-        .select('*, categories(*)')
-        .eq('is_available', true)
-        .order('name'),
+    const [toolsRes, catsRes, settingsRes] = await Promise.all([
+      supabase.from('tools').select('*, categories(*)').eq('is_available', true).order('name'),
       supabase.from('categories').select('*').order('sort_order'),
+      supabase.from('settings').select('*').eq('id', 1).single(),
     ]);
 
     setTools((toolsRes.data as ToolWithCategory[]) ?? []);
     setCategories(catsRes.data ?? []);
+    if (settingsRes.data) setSettings(settingsRes.data as Settings);
     setLoading(false);
   };
 
@@ -160,6 +159,7 @@ const ToolsPage = () => {
                       key={tool.id}
                       tool={tool}
                       categoryName={tool.categories?.name}
+                      settings={settings}
                     />
                   ))}
                 </div>
