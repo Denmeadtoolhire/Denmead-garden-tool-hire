@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Clock, Calendar, Package, ShoppingCart, Check, X } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 import type { Tool, Settings } from '@/lib/supabase';
 import BookingCalendar from '@/components/BookingCalendar';
 
@@ -175,7 +176,7 @@ const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
                 dispatch({ type: 'SET_HIRE_TYPE', hireType: calHireType });
                 dispatch({ type: 'ADD_ITEM', tool });
                 setShowAvailability(false);
-                navigate('/booking/checkout', { state: { initialDate: date.toISOString() } });
+                navigate('/booking/checkout', { state: { initialDate: format(date, 'yyyy-MM-dd') } });
               }}
               weeksAhead={4}
             />

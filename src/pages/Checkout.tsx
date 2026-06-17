@@ -47,10 +47,8 @@ const CheckoutPage = () => {
   const { state: cartState, dispatch: cartDispatch } = useCart();
   const hireType = cartState.hireType;
   const [stage, setStage] = useState<'datetime' | 'customer' | 'review'>('datetime');
-  const initialDate = (location.state as any)?.initialDate;
-  const [selectedDate, setSelectedDate] = useState<string>(
-    initialDate ? new Date(initialDate).toISOString().split('T')[0] : ''
-  );
+  const initialDate = (location.state as any)?.initialDate ?? '';
+  const [selectedDate, setSelectedDate] = useState<string>(initialDate);
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [customerData, setCustomerData] = useState({
     name: '',
