@@ -57,6 +57,7 @@ const SettingsPage = () => {
         closing_time: settings.closing_time,
         open_days: settings.open_days,
         min_notice_hours: settings.min_notice_hours,
+        turnaround_minutes: settings.turnaround_minutes ?? 30,
         request_received_email_subject: settings.request_received_email_subject,
         request_received_email_body: settings.request_received_email_body,
         alternative_email_subject: settings.alternative_email_subject,
@@ -208,6 +209,28 @@ const SettingsPage = () => {
               />
               <p className="text-xs text-gray-500 mt-1">
                 Minimum hours in advance that bookings can be made.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Turnaround Time (minutes)
+              </label>
+              <input
+                type="number"
+                min={0}
+                step={5}
+                value={settings.turnaround_minutes ?? 30}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    turnaround_minutes: parseInt(e.target.value) || 0,
+                  })
+                }
+                className="w-32 border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-green"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Gap between a tool being returned and the next booking slot opening up.
               </p>
             </div>
           </div>

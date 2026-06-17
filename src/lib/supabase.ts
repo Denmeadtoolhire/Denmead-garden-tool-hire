@@ -66,6 +66,7 @@ export type Settings = {
   opening_time: string;
   closing_time: string;
   min_notice_hours: number;
+  turnaround_minutes: number;
   open_days: number[];
   confirmation_email_subject: string;
   confirmation_email_body: string;
