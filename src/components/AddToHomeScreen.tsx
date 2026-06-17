@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Share, Plus, Smartphone } from 'lucide-react';
+import { X, Share, Plus, Smartphone, Monitor } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -8,7 +8,6 @@ interface BeforeInstallPromptEvent extends Event {
 
 let deferredPrompt: BeforeInstallPromptEvent | null = null;
 
-// Capture the install prompt event early (before any component mounts)
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -18,6 +17,10 @@ if (typeof window !== 'undefined') {
 
 function isIos(): boolean {
   return /iphone|ipad|ipod/i.test(navigator.userAgent);
+}
+
+function isMobile(): boolean {
+  return /iphone|ipad|ipod|android/i.test(navigator.userAgent);
 }
 
 function isInStandaloneMode(): boolean {
@@ -31,9 +34,9 @@ interface Props {
 
 const AddToHomeScreen = ({ onClose }: Props) => {
   const [ios] = useState(isIos());
+  const [mobile] = useState(isMobile());
   const [installed, setInstalled] = useState(false);
 
-  // Don't show if already installed
   useEffect(() => {
     if (isInStandaloneMode()) setInstalled(true);
   }, []);
@@ -48,6 +51,13 @@ const AddToHomeScreen = ({ onClose }: Props) => {
     onClose();
   };
 
+  const title = mobile ? 'Add to Home Screen' : 'Install as App';
+  const subtitle = mobile ? 'Quick access to tool hire' : 'Open instantly from your desktop';
+  const description = mobile
+    ? 'Save Denmead Tool Hire to your home screen for quick access next time you need to hire a tool.'
+    : 'Install Denmead Tool Hire as an app on your desktop — it opens instantly without needing a browser.';
+  const icon = mobile ? <Smartphone className="text-brand-gold" size={24} /> : <Monitor className="text-brand-gold" size={24} />;
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black bg-opacity-50">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative animate-slide-up">
@@ -61,17 +71,15 @@ const AddToHomeScreen = ({ onClose }: Props) => {
 
         <div className="flex items-center gap-3 mb-4">
           <div className="w-12 h-12 bg-brand-green rounded-xl flex items-center justify-center flex-shrink-0">
-            <Smartphone className="text-brand-gold" size={24} />
+            {icon}
           </div>
           <div>
-            <h2 className="font-bold text-gray-900 text-lg leading-tight">Add to Home Screen</h2>
-            <p className="text-sm text-gray-500">Quick access to tool hire</p>
+            <h2 className="font-bold text-gray-900 text-lg leading-tight">{title}</h2>
+            <p className="text-sm text-gray-500">{subtitle}</p>
           </div>
         </div>
 
-        <p className="text-gray-600 text-sm mb-5">
-          Save Denmead Tool Hire to your home screen for quick access next time you need to hire a tool.
-        </p>
+        <p className="text-gray-600 text-sm mb-5">{description}</p>
 
         {ios ? (
           <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 space-y-3">
@@ -102,7 +110,7 @@ const AddToHomeScreen = ({ onClose }: Props) => {
               className="w-full bg-brand-green text-white font-bold py-3 rounded-xl hover:bg-brand-green-dark transition-colors flex items-center justify-center gap-2"
             >
               <Plus size={18} />
-              Add to Home Screen
+              {title}
             </button>
             <button
               onClick={onClose}
@@ -112,7 +120,6 @@ const AddToHomeScreen = ({ onClose }: Props) => {
             </button>
           </div>
         ) : (
-          // Fallback: browser doesn't support install prompt (e.g. already installed or desktop)
           <button
             onClick={onClose}
             className="w-full bg-brand-green text-white font-semibold py-3 rounded-xl hover:bg-brand-green-dark transition-colors"
