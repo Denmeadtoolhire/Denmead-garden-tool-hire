@@ -16,7 +16,7 @@ const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
   const { dispatch } = useCart();
   const navigate = useNavigate();
   const [showAvailability, setShowAvailability] = useState(false);
-  const [calHireType, setCalHireType] = useState<'4hr' | '1day'>('4hr');
+  const [calHireType, setCalHireType] = useState<'4hr' | '1day' | null>(null);
 
   return (
     <>
@@ -70,7 +70,7 @@ const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
 
           {tool.is_available ? (
             <button
-              onClick={() => setShowAvailability(true)}
+              onClick={() => { setCalHireType(null); setShowAvailability(true); }}
               className="flex items-center justify-center gap-2 w-full font-bold py-3 px-4 rounded-xl bg-brand-green text-white hover:bg-brand-green-dark transition-colors"
             >
               <Calendar size={16} />
@@ -102,42 +102,55 @@ const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
             </button>
 
             <h2 className="font-bold text-gray-900 text-lg mb-1">{tool.name}</h2>
-            <p className="text-sm text-gray-500 mb-4">Availability for the next 4 weeks</p>
+            <p className="text-sm text-gray-500 mb-4">Check availability and book</p>
 
-            {/* Hire type toggle */}
-            <div className="flex rounded-xl overflow-hidden border border-gray-200 mb-4">
+            {/* Step 1: Hire type — must be selected first */}
+            <p className={`text-xs font-semibold mb-2 ${calHireType ? 'text-gray-500' : 'text-brand-green'}`}>
+              Step 1 — Select hire type
+            </p>
+            <div className={`flex rounded-xl overflow-hidden border mb-5 ${!calHireType ? 'border-brand-green ring-2 ring-brand-green ring-opacity-30' : 'border-gray-200'}`}>
               <button
                 onClick={() => setCalHireType('4hr')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-bold transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-bold transition-colors ${
                   calHireType === '4hr' ? 'bg-brand-green text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                <Clock size={14} /> 4 Hours
+                <Clock size={14} /> 4 Hours — £{Number(tool.price_4hr).toFixed(2)}
               </button>
               <button
                 onClick={() => setCalHireType('1day')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-bold border-l border-gray-200 transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-bold border-l border-gray-200 transition-colors ${
                   calHireType === '1day' ? 'bg-brand-green text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                <Calendar size={14} /> Full Day
+                <Calendar size={14} /> Full Day — £{Number(tool.price_1day).toFixed(2)}
               </button>
             </div>
 
-            <p className="text-xs text-gray-500 mb-3">Tap a green date to book it</p>
-            <BookingCalendar
-              toolId={tool.id}
-              settings={settings}
-              hireType={calHireType}
-              selectedDate={null}
-              onSelectDate={(date) => {
-                dispatch({ type: 'SET_HIRE_TYPE', hireType: calHireType });
-                dispatch({ type: 'ADD_ITEM', tool });
-                setShowAvailability(false);
-                navigate('/booking/checkout', { state: { initialDate: format(date, 'yyyy-MM-dd') } });
-              }}
-              weeksAhead={4}
-            />
+            {/* Step 2: Calendar — only shown after hire type selected */}
+            {calHireType ? (
+              <>
+                <p className="text-xs font-semibold text-gray-500 mb-2">Step 2 — Pick a date</p>
+                <p className="text-xs text-gray-400 mb-3">Tap a green date to book it</p>
+                <BookingCalendar
+                  toolId={tool.id}
+                  settings={settings}
+                  hireType={calHireType}
+                  selectedDate={null}
+                  onSelectDate={(date) => {
+                    dispatch({ type: 'SET_HIRE_TYPE', hireType: calHireType });
+                    dispatch({ type: 'ADD_ITEM', tool });
+                    setShowAvailability(false);
+                    navigate('/booking/checkout', { state: { initialDate: format(date, 'yyyy-MM-dd') } });
+                  }}
+                  weeksAhead={4}
+                />
+              </>
+            ) : (
+              <div className="bg-gray-50 rounded-xl p-6 text-center text-gray-400 text-sm">
+                Select a hire type above to see availability
+              </div>
+            )}
           </div>
         </div>
       )}
