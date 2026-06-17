@@ -46,11 +46,11 @@ const CheckoutPage = () => {
   const location = useLocation();
   const { state: cartState, dispatch: cartDispatch } = useCart();
   const hireType = cartState.hireType;
+  const initialDate = (location.state as any)?.initialDate ?? '';
+  const initialTime = (location.state as any)?.initialTime ?? '';
   const [stage, setStage] = useState<'datetime' | 'customer' | 'review'>(
     initialDate && initialTime ? 'customer' : 'datetime'
   );
-  const initialDate = (location.state as any)?.initialDate ?? '';
-  const initialTime = (location.state as any)?.initialTime ?? '';
   const [selectedDate, setSelectedDate] = useState<string>(initialDate);
   const [selectedTime, setSelectedTime] = useState<string>(initialTime);
   const [customerData, setCustomerData] = useState({
