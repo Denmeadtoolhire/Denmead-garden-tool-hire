@@ -76,6 +76,10 @@ async function sendEmail(apiKey: string, payload: {
   }
 }
 
+function nl2br(text: string): string {
+  return text.replace(/\n/g, '<br>');
+}
+
 function formatDateTime(startIso: string, endIso: string, hireType: '4hr' | '1day'): string {
   const start = parseISO(startIso);
   const end = parseISO(endIso);
@@ -192,7 +196,7 @@ export async function sendRequestReceivedEmail(booking: Booking, toolNames: stri
   const html = `
     ${baseHeader('Booking Request Received!')}
     <p>Hi ${booking.customer_name},</p>
-    <p>${bodyText}</p>
+    <p>${nl2br(bodyText)}</p>
     ${bookingTable(booking, toolNames)}
     <p>If you need to get in touch urgently, please call us on <strong>${PHONE}</strong>.</p>
     ${baseFooter()}
@@ -236,7 +240,7 @@ export async function sendApprovalEmail(booking: Booking, toolNames: string[]): 
   const html = `
     ${baseHeader('Booking Confirmed!')}
     <p>Hi ${booking.customer_name},</p>
-    <p>${bodyText}</p>
+    <p>${nl2br(bodyText)}</p>
 
     <div style="background: #1a6b2f; color: white; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <p style="margin: 0 0 8px; font-size: 12px; opacity: 0.9;">Booking Reference</p>
@@ -322,7 +326,7 @@ export async function sendAlternativeSuggestionEmail(
   const html = `
     ${baseHeader('Alternative Time Suggested')}
     <p>Hi ${booking.customer_name},</p>
-    <p>${bodyText}</p>
+    <p>${nl2br(bodyText)}</p>
     <p>Your original request: <strong>${originalDateTime}</strong></p>
     <p>Our suggested alternative:</p>
     <div style="background: white; border: 2px solid #1a6b2f; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
