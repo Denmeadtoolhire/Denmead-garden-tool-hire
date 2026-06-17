@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /booking/
+
+Sitemap: https://www.denmeadtoolhire.co.uk/sitemap.xml
