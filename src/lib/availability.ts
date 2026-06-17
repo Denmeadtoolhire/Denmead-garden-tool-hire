@@ -73,11 +73,14 @@ export async function getAvailableSlotsFor4hr(
   ]);
   const bookings = [...(legacyBookings ?? []), ...(itemBookings ?? [])];
 
-  const { data: tool } = await supabase
-    .from('tools')
-    .select('quantity')
-    .eq('id', toolId)
-    .single();
+  const [{ data: tool }, { data: blockedPeriods }] = await Promise.all([
+    supabase.from('tools').select('quantity').eq('id', toolId).single(),
+    supabase
+      .from('blocked_periods')
+      .select('start_time, end_time')
+      .gte('end_time', dayStart.toISOString())
+      .lte('start_time', dayEnd.toISOString()),
+  ]);
 
   const quantity = tool?.quantity ?? 1;
 
@@ -88,6 +91,12 @@ export async function getAvailableSlotsFor4hr(
     if (isBefore(slot.start, minStart)) {
       return { ...slot, available: false };
     }
+    const isBlocked = (blockedPeriods ?? []).some((bp) => {
+      const bpStart = parseISO(bp.start_time);
+      const bpEnd = parseISO(bp.end_time);
+      return isBefore(bpStart, slot.end) && isAfter(bpEnd, slot.start);
+    });
+    if (isBlocked) return { ...slot, available: false };
     const bookedCount = (bookings ?? []).filter((b) => {
       const bStart = parseISO(b.start_time);
       const bEnd = parseISO(b.end_time);
@@ -105,15 +114,13 @@ export async function isFullDayAvailable(
   const open = setTimeOnDate(date, settings.opening_time);
   const close = setTimeOnDate(date, settings.closing_time);
 
-  const { data: tool } = await supabase
-    .from('tools')
-    .select('quantity')
-    .eq('id', toolId)
-    .single();
-
-  const quantity = tool?.quantity ?? 1;
-
-  const [{ data: legacyBookings }, { data: itemBookings }] = await Promise.all([
+  const [{ data: tool }, { data: blockedPeriods }, { data: legacyBookings }, { data: itemBookings }] = await Promise.all([
+    supabase.from('tools').select('quantity').eq('id', toolId).single(),
+    supabase
+      .from('blocked_periods')
+      .select('start_time, end_time')
+      .gte('end_time', startOfDay(date).toISOString())
+      .lte('start_time', endOfDay(date).toISOString()),
     supabase
       .from('bookings')
       .select('start_time, end_time')
@@ -130,6 +137,15 @@ export async function isFullDayAvailable(
       .lte('end_time', endOfDay(date).toISOString()),
   ]);
   const bookings = [...(legacyBookings ?? []), ...(itemBookings ?? [])];
+
+  const isBlocked = (blockedPeriods ?? []).some((bp) => {
+    const bpStart = parseISO(bp.start_time);
+    const bpEnd = parseISO(bp.end_time);
+    return isBefore(bpStart, close) && isAfter(bpEnd, open);
+  });
+  if (isBlocked) return false;
+
+  const quantity = tool?.quantity ?? 1;
 
   const bookedCount = (bookings ?? []).filter((b) => {
     const bStart = parseISO(b.start_time);

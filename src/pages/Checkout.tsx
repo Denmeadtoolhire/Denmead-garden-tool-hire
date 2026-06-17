@@ -4,7 +4,41 @@ import { supabase, type Booking, type Settings } from '@/lib/supabase';
 import { useCart } from '@/contexts/CartContext';
 import { getAvailableSlotsForMultiTools, isFullDayAvailableForMultiTools } from '@/lib/availability';
 import { sendRequestReceivedEmail, sendAdminNewRequestEmail } from '@/lib/email';
-import { ChevronLeft, AlertCircle } from 'lucide-react';
+import { ChevronLeft, AlertCircle, X } from 'lucide-react';
+
+const TERMS_AND_CONDITIONS = `Denmead Tool and Garden Hire Ltd - Terms and Conditions
+
+1. Rental Agreement: The following terms and conditions constitute a legally binding rental agreement between the customer ("Renter") and Denmead Tool and Garden Hire Ltd ("Company").
+
+2. Rental Period: The rental period begins on the specified start date and ends on the agreed-upon return date. Any extension must be approved by the Company in advance.
+
+3. Rates and Payment: Renter agrees to pay the rental rate as specified in the agreement. Additional fees may apply for late returns, damages, or other specified conditions.
+
+4. Security Deposit: A security deposit is required before the commencement of the rental period if the value of said tool exceeds £200. The deposit will be refunded upon the satisfactory return of the tools in its original condition.
+
+5. Tool Condition, Damage or Loss: Renter acknowledges receiving the tools in good condition. Any damage or excessive wear during the rental period is the responsibility of the Renter. Any necessary repairs or cleaning of tools may result in a charge to the Renter. In respect of any Hire Goods which are lost, stolen or damaged beyond economic repair during the Hire Period the Customer will: 5.1 for any Hire Goods less than twelve (12) months old from first registration pay to the Company the new replacement cost of the Hire Goods; and/or 5.2 for any Hire Goods more than twelve (12) months old from first registration, pay for the reasonable cost to replace the Hire Goods, as stipulated by the Company.
+
+6. Tool Usage and Safety: Renter agrees to use the tools only for their intended purpose and in accordance with safety guidelines provided by the Company.
+
+7. Liability: The Renter assumes all liability for injuries, damages, or losses incurred during the use of the rented tools. The Company is not liable for any consequential damages.
+
+8. Insurance: Optional insurance coverage is available for an additional fee. Details of coverage and associated costs can be provided upon request.
+
+9. Reservation and Cancellation: Reservations are subject to availability. Cancellation fees may apply if the reservation is canceled less than 1 hour before the agreed-upon start date.
+
+10. Customer Responsibilities: Renter is responsible for the proper transportation, storage, and use of the tools. Any misuse or negligence may result in additional charges.
+
+11. Return Procedure: Tools must be returned on or before the agreed-upon return date in the condition it was given. Late returns may incur additional charges.
+
+12. Termination of Agreement: The Company reserves the right to terminate the agreement in the event of a breach of terms. Renter must return the tools immediately upon termination.
+
+13. Dispute Resolution: Any disputes arising from this agreement will be resolved through UK courts in accordance with the laws of the UK.
+
+14. Governing Law: This agreement is governed by the laws of the UK. Any legal action must be initiated in the appropriate courts of the UK.
+
+15. Customer Acknowledgment: By accepting this agreement, the Renter acknowledges that they have read, understood, and agreed to abide by these terms and conditions.
+
+Denmead Tool and Garden Hire Ltd, 1 Inhams Lane, Denmead, PO7 6LX. Tel: 07889765153`;
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -27,6 +61,8 @@ const CheckoutPage = () => {
   >([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tcAccepted, setTcAccepted] = useState(false);
+  const [tcModalOpen, setTcModalOpen] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -492,9 +528,29 @@ const CheckoutPage = () => {
               <span className="text-brand-green">£{cartTotal.toFixed(2)}</span>
             </div>
 
+            {/* T&Cs checkbox */}
+            <label className="flex items-start gap-3 py-2 mb-4 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={tcAccepted}
+                onChange={(e) => setTcAccepted(e.target.checked)}
+                className="w-4 h-4 mt-0.5 rounded border-gray-300 shrink-0"
+              />
+              <span className="text-sm text-gray-700">
+                I have read and agree to the{' '}
+                <button
+                  type="button"
+                  onClick={() => setTcModalOpen(true)}
+                  className="text-brand-green underline font-medium hover:text-brand-green-dark"
+                >
+                  Terms and Conditions
+                </button>
+              </span>
+            </label>
+
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !tcAccepted}
               className="w-full bg-brand-green text-white font-bold py-4 px-4 rounded-xl hover:bg-brand-green-dark disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-lg"
             >
               {isSubmitting ? 'Creating Booking...' : 'Send Booking Request'}
@@ -503,6 +559,36 @@ const CheckoutPage = () => {
             <p className="text-center text-sm text-gray-600 mt-4">
               Your booking request will be reviewed and a confirmation email will be sent to confirm your booking.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* T&Cs Modal */}
+      {tcModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-bold text-gray-900">Terms and Conditions</h2>
+              <button
+                onClick={() => setTcModalOpen(false)}
+                className="text-gray-500 hover:text-gray-800 transition-colors"
+              >
+                <X size={22} />
+              </button>
+            </div>
+            <div className="overflow-y-auto px-6 py-4 flex-1">
+              <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans leading-relaxed">
+                {TERMS_AND_CONDITIONS}
+              </pre>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200">
+              <button
+                onClick={() => setTcModalOpen(false)}
+                className="w-full bg-brand-green text-white font-bold py-3 px-4 rounded-xl hover:bg-brand-green-dark transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
