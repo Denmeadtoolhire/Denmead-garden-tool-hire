@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AdminProvider, useAdmin } from './contexts/AdminContext';
 import { CartProvider } from './contexts/CartContext';
 import Navbar from './components/Navbar';
@@ -23,6 +23,12 @@ import BlockedDates from './pages/admin/BlockedDates';
 import NewBooking from './pages/admin/NewBooking';
 import './index.css';
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAdmin();
   if (!isAuthenticated) return <Navigate to="/admin" replace />;
@@ -44,6 +50,7 @@ function App() {
     <BrowserRouter>
       <AdminProvider>
         <CartProvider>
+          <ScrollToTop />
           <Routes>
             <Route
               path="/"
