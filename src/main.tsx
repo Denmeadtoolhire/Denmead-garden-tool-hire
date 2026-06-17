@@ -20,6 +20,7 @@ import SettingsPage from './pages/admin/Settings';
 import CustomersPage from './pages/admin/Customers';
 import UnsubscribePage from './pages/admin/Unsubscribe';
 import BlockedDates from './pages/admin/BlockedDates';
+import NewBooking from './pages/admin/NewBooking';
 import './index.css';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -146,6 +147,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <BlockedDates />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/new-booking"
+            element={
+              <ProtectedRoute>
+                <NewBooking />
               </ProtectedRoute>
             }
           />

@@ -13,10 +13,12 @@ import {
   X,
   Home,
   Users,
+  PlusCircle,
 } from 'lucide-react';
 
 const navItems = [
   { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/admin/new-booking', label: 'New Booking', icon: PlusCircle },
   { to: '/admin/tools', label: 'Tools', icon: Wrench },
   { to: '/admin/bookings', label: 'Bookings', icon: CalendarCheck },
   { to: '/admin/customers', label: 'Customers', icon: Users },
