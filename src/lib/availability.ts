@@ -1,4 +1,6 @@
-import { addHours, setHours, setMinutes, setSeconds, setMilliseconds, isBefore, isAfter, startOfDay, endOfDay, parseISO, format } from 'date-fns';
+import { addHours, addMinutes, setHours, setMinutes, setSeconds, setMilliseconds, isBefore, isAfter, startOfDay, endOfDay, parseISO, format } from 'date-fns';
+
+const TURNAROUND_MINUTES = 30;
 import { supabase } from './supabase';
 import type { Settings } from './supabase';
 
@@ -99,7 +101,7 @@ export async function getAvailableSlotsFor4hr(
     if (isBlocked) return { ...slot, available: false };
     const bookedCount = (bookings ?? []).filter((b) => {
       const bStart = parseISO(b.start_time);
-      const bEnd = parseISO(b.end_time);
+      const bEnd = addMinutes(parseISO(b.end_time), TURNAROUND_MINUTES);
       return isBefore(bStart, slot.end) && isAfter(bEnd, slot.start);
     }).length;
     return { ...slot, available: bookedCount < quantity };
@@ -149,7 +151,7 @@ export async function isFullDayAvailable(
 
   const bookedCount = (bookings ?? []).filter((b) => {
     const bStart = parseISO(b.start_time);
-    const bEnd = parseISO(b.end_time);
+    const bEnd = addMinutes(parseISO(b.end_time), TURNAROUND_MINUTES);
     return isBefore(bStart, close) && isAfter(bEnd, open);
   }).length;
 
