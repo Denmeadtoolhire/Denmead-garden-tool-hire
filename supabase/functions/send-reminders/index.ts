@@ -5,21 +5,27 @@ const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+const DRIVE_IMAGE = 'https://res.cloudinary.com/da5zsuxlz/image/upload/c_fill,w_600,h_300,g_auto/v1781712224/Screenshot_20240510-133757_lg40gr.png';
+
 serve(async () => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // Find bookings starting between 3h55m and 4h05m from now (10-min window around the 4hr mark)
+  // Find bookings starting tomorrow — run at 6pm each evening
   const now = new Date();
-  const windowStart = new Date(now.getTime() + (4 * 60 - 5) * 60 * 1000);
-  const windowEnd = new Date(now.getTime() + (4 * 60 + 5) * 60 * 1000);
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStart = new Date(tomorrow);
+  tomorrowStart.setHours(0, 0, 0, 0);
+  const tomorrowEnd = new Date(tomorrow);
+  tomorrowEnd.setHours(23, 59, 59, 999);
 
   const { data: bookings, error } = await supabase
     .from('bookings')
     .select('*')
     .eq('status', 'approved')
     .eq('reminder_sent', false)
-    .gte('start_time', windowStart.toISOString())
-    .lte('start_time', windowEnd.toISOString());
+    .gte('start_time', tomorrowStart.toISOString())
+    .lte('start_time', tomorrowEnd.toISOString());
 
   if (error) {
     console.error('Error fetching bookings:', error);
@@ -51,9 +57,9 @@ serve(async () => {
             <p style="color: #ccffcc; margin: 6px 0 0; font-size: 14px;">Your Community Tool Rental Experts</p>
           </div>
           <div style="padding: 30px; background: #f9f9f9;">
-            <h2 style="color: #1a6b2f; margin-top: 0;">⏰ Reminder: Your hire starts in 4 hours!</h2>
+            <h2 style="color: #1a6b2f; margin-top: 0;">📅 Reminder: Your hire is tomorrow!</h2>
             <p>Hi ${booking.customer_name},</p>
-            <p>This is a friendly reminder that your tool hire is coming up shortly.</p>
+            <p>This is a friendly reminder that your tool hire is scheduled for <strong>tomorrow</strong>.</p>
 
             <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0;">
               <h3 style="color: #1a6b2f; margin-top: 0;">Your Booking</h3>
@@ -70,7 +76,10 @@ serve(async () => {
               <a href="https://www.google.com/maps/search/1+Inhams+Lane+Denmead+PO7+6LX" style="color: #1a6b2f; font-weight: bold; text-decoration: none;">
                 1 Inhams Lane, Denmead, PO7 6LX
               </a>
+              <p style="margin: 10px 0 0; font-size: 14px; color: #555;">We operate from our home address, please click on the map link. We are the corner house, big wooden gates.</p>
             </div>
+
+            <img src="${DRIVE_IMAGE}" alt="Our collection point — corner house with big wooden gates" style="width: 100%; border-radius: 8px; margin: 0 0 20px; display: block;" />
 
             <p><strong>Payment:</strong> Cash or card accepted on collection.</p>
             <p style="color: #666; font-size: 13px;">Questions? Text us on <strong>07889765153</strong> and we'll get back to you asap.</p>
@@ -91,7 +100,7 @@ serve(async () => {
         body: JSON.stringify({
           sender: { name: 'Denmead Tool Hire', email: 'bookings@denmeadtoolhire.co.uk' },
           to: [{ email: booking.customer_email, name: booking.customer_name }],
-          subject: `Reminder: Your hire starts in 4 hours — ${formatDate(startDate)}`,
+          subject: `Reminder: Your tool hire is tomorrow — ${formatDate(startDate)}`,
           htmlContent: html,
         }),
       });
