@@ -11,6 +11,8 @@ import type { Booking, Tool, Settings } from './supabase';
 import { supabase } from './supabase';
 import { format, parseISO } from 'date-fns';
 
+const DRIVE_IMAGE = 'https://res.cloudinary.com/da5zsuxlz/image/upload/c_fill,w_600,h_300,g_auto/v1781712224/Screenshot_20240510-133757_lg40gr.png';
+
 const FROM_ADDRESS = 'bookings@denmeadtoolhire.co.uk';
 const FROM_NAME = 'Denmead Tool Hire';
 const ADMIN_EMAIL = 'denmeadtoolhire@gmail.com';
@@ -258,7 +260,10 @@ export async function sendApprovalEmail(booking: Booking, tool: Tool): Promise<v
       <a href="${mapsUrl}" style="color: #1a6b2f; text-decoration: none; font-weight: bold;">
         📍 1 Inhams Lane, Denmead, PO7 6LX
       </a>
+      <p style="margin: 10px 0 0; font-size: 14px; color: #555;">We operate from our home address. We are the corner house with big wooden gates.</p>
     </div>
+
+    <img src="${DRIVE_IMAGE}" alt="Our collection point — corner house with big wooden gates" style="width: 100%; border-radius: 8px; margin: 0 0 20px; display: block;" />
 
     <p><strong>Payment:</strong> Cash or card accepted on collection.</p>
 
