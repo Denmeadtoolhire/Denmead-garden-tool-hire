@@ -24,9 +24,9 @@ const ToolDetailPage = () => {
   const [tool, setTool] = useState<Tool | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
-  const [step, setStep] = useState<Step>('type');
+  const [step, setStep] = useState<Step>('date');
 
-  const [hireType, setHireType] = useState<'4hr' | '1day' | null>(null);
+  const [hireType, setHireType] = useState<'4hr' | '1day'>('4hr');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [slots, setSlots] = useState<SlotOption[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<SlotOption | null>(null);
@@ -57,7 +57,7 @@ const ToolDetailPage = () => {
   const handleDateSelect = async (date: Date) => {
     setSelectedDate(date);
     setSelectedSlot(null);
-    if (!hireType || !settings || !id) return;
+    if (!settings || !id) return;
 
     if (hireType === '4hr') {
       setLoadingSlots(true);
@@ -75,7 +75,7 @@ const ToolDetailPage = () => {
   };
 
   const handleSubmit = async () => {
-    if (!tool || !settings || !selectedDate || !hireType) return;
+    if (!tool || !settings || !selectedDate) return;
     setSubmitting(true);
     setError('');
 
@@ -193,7 +193,7 @@ const ToolDetailPage = () => {
     );
   }
 
-  const price = hireType === '4hr' ? tool.price_4hr : tool.price_1day;
+  const price = hireType === '1day' ? tool.price_1day : tool.price_4hr;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -248,10 +248,10 @@ const ToolDetailPage = () => {
 
           {/* Right: Booking flow */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Step 1: Hire type */}
+            {/* Hire type + calendar always visible */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              <h2 className="font-bold text-gray-800 mb-4">1. Choose Hire Type</h2>
-              <div className="grid grid-cols-2 gap-4">
+              {/* Hire type toggle */}
+              <div className="flex rounded-xl overflow-hidden border border-gray-200 mb-5">
                 <button
                   onClick={() => {
                     setHireType('4hr');
@@ -259,15 +259,14 @@ const ToolDetailPage = () => {
                     setSelectedSlot(null);
                     setStep('date');
                   }}
-                  className={`p-4 rounded-lg border-2 text-center transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold transition-colors ${
                     hireType === '4hr'
-                      ? 'border-brand-green bg-green-50 text-brand-green'
-                      : 'border-gray-200 hover:border-brand-green'
+                      ? 'bg-brand-green text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
                   }`}
                 >
-                  <Clock size={24} className="mx-auto mb-2" />
-                  <div className="font-bold">4 Hours</div>
-                  <div className="text-sm text-gray-500">£{Number(tool.price_4hr).toFixed(2)}</div>
+                  <Clock size={16} />
+                  4 Hours — £{Number(tool.price_4hr).toFixed(2)}
                 </button>
                 <button
                   onClick={() => {
@@ -276,37 +275,31 @@ const ToolDetailPage = () => {
                     setSelectedSlot(null);
                     setStep('date');
                   }}
-                  className={`p-4 rounded-lg border-2 text-center transition-colors ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold border-l border-gray-200 transition-colors ${
                     hireType === '1day'
-                      ? 'border-brand-green bg-green-50 text-brand-green'
-                      : 'border-gray-200 hover:border-brand-green'
+                      ? 'bg-brand-green text-white'
+                      : 'bg-white text-gray-600 hover:bg-gray-50'
                   }`}
                 >
-                  <Calendar size={24} className="mx-auto mb-2" />
-                  <div className="font-bold">Full Day</div>
-                  <div className="text-sm text-gray-500">£{Number(tool.price_1day).toFixed(2)}</div>
+                  <Calendar size={16} />
+                  Full Day — £{Number(tool.price_1day).toFixed(2)}
                 </button>
               </div>
+
+              {/* Calendar always shown */}
+              <BookingCalendar
+                toolId={tool.id}
+                settings={settings}
+                hireType={hireType}
+                selectedDate={selectedDate}
+                onSelectDate={handleDateSelect}
+              />
             </div>
 
-            {/* Step 2: Date */}
-            {hireType && (
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <h2 className="font-bold text-gray-800 mb-4">2. Select Date</h2>
-                <BookingCalendar
-                  toolId={tool.id}
-                  settings={settings}
-                  hireType={hireType}
-                  selectedDate={selectedDate}
-                  onSelectDate={handleDateSelect}
-                />
-              </div>
-            )}
-
-            {/* Step 3: Slot */}
+            {/* Step 2: Slot */}
             {selectedDate && (step === 'slot' || step === 'details' || step === 'confirm') && (
               <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                <h2 className="font-bold text-gray-800 mb-4">3. Select Time</h2>
+                <h2 className="font-bold text-gray-800 mb-4">2. Select Time</h2>
                 {loadingSlots ? (
                   <p className="text-gray-500">Loading slots...</p>
                 ) : hireType === '1day' ? (
@@ -373,11 +366,11 @@ const ToolDetailPage = () => {
               </div>
             )}
 
-            {/* Step 4: Customer details */}
+            {/* Step 3: Customer details */}
             {(step === 'details' || step === 'confirm') &&
               (hireType === '1day' ? fullDayAvailable : selectedSlot) && (
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-                  <h2 className="font-bold text-gray-800 mb-4">4. Your Details</h2>
+                  <h2 className="font-bold text-gray-800 mb-4">3. Your Details</h2>
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -461,10 +454,10 @@ const ToolDetailPage = () => {
                 </div>
               )}
 
-            {/* Step 5: Confirm */}
+            {/* Step 4: Confirm */}
             {step === 'confirm' && name && email && phone && address && (
               <div className="bg-white rounded-xl p-6 shadow-sm border border-brand-gold">
-                <h2 className="font-bold text-gray-800 mb-4">5. Confirm Booking</h2>
+                <h2 className="font-bold text-gray-800 mb-4">4. Confirm Booking</h2>
 
                 <div className="bg-gray-50 rounded-lg p-4 mb-4 space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -481,7 +474,7 @@ const ToolDetailPage = () => {
                     <span className="text-gray-600">Time:</span>
                     <span className="font-medium">
                       {hireType === '1day'
-                        ? `${getDayOpeningTime(settings, selectedDate)} – ${getDayClosingTime(settings, selectedDate)} (Full day)`
+                        ? `${getDayOpeningTime(settings, selectedDate!)} – ${getDayClosingTime(settings, selectedDate!)} (Full day)`
                         : selectedSlot?.label}
                     </span>
                   </div>
