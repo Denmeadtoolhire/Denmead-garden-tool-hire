@@ -104,7 +104,7 @@ const BookingConfirmationPage = () => {
         <div className="bg-white rounded-2xl shadow-md overflow-hidden mb-6">
           <div className="bg-brand-green text-white px-6 py-4">
             <h2 className="font-bold text-lg">
-              {isMultiTool ? 'Multi-Tool Booking' : 'Tool Booking'}
+              Booking Confirmation
             </h2>
             <p className="text-green-200 text-sm mt-1">
               Request ref: {booking.id.substring(0, 8).toUpperCase()}
