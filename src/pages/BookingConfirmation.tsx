@@ -3,6 +3,7 @@ import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { Clock, Calendar, Mail } from 'lucide-react';
 import { supabase, type Booking, type Settings } from '@/lib/supabase';
+import AddToHomeScreen from '@/components/AddToHomeScreen';
 
 const BookingConfirmationPage = () => {
   const location = useLocation();
@@ -11,6 +12,7 @@ const BookingConfirmationPage = () => {
   const [booking, setBooking] = useState<Booking | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -44,6 +46,13 @@ const BookingConfirmationPage = () => {
     loadData();
   }, [bookingId]);
 
+  useEffect(() => {
+    if (!loading && booking) {
+      const timer = setTimeout(() => setShowInstallPrompt(true), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, booking]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -73,6 +82,8 @@ const BookingConfirmationPage = () => {
     : 'Your tools';
 
   return (
+    <>
+    {showInstallPrompt && <AddToHomeScreen onClose={() => setShowInstallPrompt(false)} />}
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
       <div className="max-w-lg w-full">
         {/* Header */}
@@ -193,6 +204,7 @@ const BookingConfirmationPage = () => {
         )}
       </div>
     </div>
+    </>
   );
 };
 
