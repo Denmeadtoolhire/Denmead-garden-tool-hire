@@ -108,11 +108,6 @@ const HomePage = () => {
             alt="Denmead Tool & Garden Hire"
             className="h-48 w-auto object-contain mx-auto mb-8 drop-shadow-lg rounded-3xl"
           />
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-5 leading-tight tracking-tight">
-            Hire the Tools You Need,
-            <br />
-            <span className="text-brand-gold">When You Need Them</span>
-          </h1>
           <p className="text-xl text-green-100 mb-10 max-w-2xl mx-auto leading-relaxed">
             Denmead's friendly local tool hire service — garden equipment, DIY tools and home
             appliances, available for half-day or full-day hire.
