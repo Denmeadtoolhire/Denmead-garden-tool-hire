@@ -1,4 +1,4 @@
-import { addHours, addMinutes, setHours, setMinutes, setSeconds, setMilliseconds, isBefore, isAfter, startOfDay, endOfDay, parseISO, format } from 'date-fns';
+import { addHours, addMinutes, addDays, setHours, setMinutes, setSeconds, setMilliseconds, isBefore, isAfter, startOfDay, endOfDay, parseISO, format } from 'date-fns';
 
 import { supabase } from './supabase';
 import type { Settings } from './supabase';
@@ -180,7 +180,7 @@ export async function isDayFullyBooked(
   hireType: '4hr' | '1day' | '2day'
 ): Promise<boolean> {
   if (hireType === '2day') {
-    const day2 = addHours(date, 24);
+    const day2 = startOfDay(addDays(date, 1));
     // If day 2 is a closed day, this start date can't be booked as a 2-day hire
     if (!isDateAvailableForBooking(day2, settings)) return true;
     const [avail1, avail2] = await Promise.all([

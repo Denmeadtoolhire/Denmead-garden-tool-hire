@@ -89,7 +89,7 @@ const CheckoutPage = () => {
         const toolIds = cartState.items.map((item) => item.tool.id);
 
         if (hireType === '1day' || hireType === '2day') {
-          const day2 = hireType === '2day' ? new Date(date.getTime() + 24 * 60 * 60 * 1000) : null;
+          const day2 = hireType === '2day' ? new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1) : null;
           const available = hireType === '2day'
             ? (await isFullDayAvailableForMultiTools(toolIds, date, settings)) &&
               (await isFullDayAvailableForMultiTools(toolIds, day2!, settings))
@@ -154,7 +154,7 @@ const CheckoutPage = () => {
       if (hireType === '4hr') {
         endTime.setHours(endTime.getHours() + 4);
       } else if (hireType === '2day') {
-        const day2 = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
+        const day2 = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() + 1);
         const [ch, cm] = getDayClosingTime(settings, day2).split(':').map(Number);
         endTime = new Date(day2);
         endTime.setHours(ch, cm, 0, 0);
