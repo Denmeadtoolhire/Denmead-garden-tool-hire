@@ -20,7 +20,7 @@ import { isDateAvailableForBooking, isDayFullyBooked } from '@/lib/availability'
 interface BookingCalendarProps {
   toolId: string;
   settings: Settings;
-  hireType: '4hr' | '1day';
+  hireType: '4hr' | '1day' | '2day';
   selectedDate: Date | null;
   onSelectDate: (date: Date) => void;
   weeksAhead?: number;

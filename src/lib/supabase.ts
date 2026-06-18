@@ -20,6 +20,7 @@ export type Tool = {
   quantity: number;
   price_4hr: number;
   price_1day: number;
+  price_2day: number;
   is_available: boolean;
   created_at: string;
   categories?: Category;
@@ -43,7 +44,7 @@ export type Booking = {
   customer_email: string;
   customer_phone: string;
   customer_address: string | null;
-  hire_type: '4hr' | '1day';
+  hire_type: '4hr' | '1day' | '2day';
   start_time: string;
   end_time: string;
   status: 'pending' | 'approved' | 'alternative_suggested' | 'cancelled';

@@ -14,6 +14,7 @@ const emptyForm = {
   quantity: 1,
   price_4hr: 0,
   price_1day: 0,
+  price_2day: 0,
   is_available: true,
 };
 
@@ -57,6 +58,7 @@ const ManageTools = () => {
       quantity: tool.quantity,
       price_4hr: Number(tool.price_4hr),
       price_1day: Number(tool.price_1day),
+      price_2day: Number(tool.price_2day),
       is_available: tool.is_available,
     });
     setShowForm(true);
@@ -72,6 +74,7 @@ const ManageTools = () => {
       quantity: form.quantity,
       price_4hr: form.price_4hr,
       price_1day: form.price_1day,
+      price_2day: form.price_2day,
       is_available: form.is_available,
     };
 
@@ -168,7 +171,7 @@ const ManageTools = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
                     <input
@@ -191,15 +194,30 @@ const ManageTools = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Day Price (£)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">1 Day Price (£)</label>
                     <input
                       type="number"
                       min={0}
                       step={0.01}
                       value={form.price_1day}
-                      onChange={(e) => field('price_1day', parseFloat(e.target.value) || 0)}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        setForm((f) => ({ ...f, price_1day: val, price_2day: parseFloat((val + 5).toFixed(2)) }));
+                      }}
                       className="w-full border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-green"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">2 Day Price (£)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      value={form.price_2day}
+                      onChange={(e) => field('price_2day', parseFloat(e.target.value) || 0)}
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-brand-green"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Auto-filled as 1 day + £5</p>
                   </div>
                 </div>
 
@@ -283,7 +301,10 @@ const ManageTools = () => {
                     4hr
                   </th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-700 hidden md:table-cell">
-                    Day
+                    1 Day
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-700 hidden md:table-cell">
+                    2 Day
                   </th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-700 hidden sm:table-cell">
                     Qty
@@ -304,6 +325,9 @@ const ManageTools = () => {
                     </td>
                     <td className="px-4 py-3 text-gray-700 hidden md:table-cell">
                       £{Number(tool.price_1day).toFixed(2)}
+                    </td>
+                    <td className="px-4 py-3 text-gray-700 hidden md:table-cell">
+                      £{Number(tool.price_2day).toFixed(2)}
                     </td>
                     <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{tool.quantity}</td>
                     <td className="px-4 py-3">

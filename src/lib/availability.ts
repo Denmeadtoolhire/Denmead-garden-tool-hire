@@ -177,8 +177,16 @@ export async function isDayFullyBooked(
   toolId: string,
   date: Date,
   settings: Settings,
-  hireType: '4hr' | '1day'
+  hireType: '4hr' | '1day' | '2day'
 ): Promise<boolean> {
+  if (hireType === '2day') {
+    const day2 = addHours(date, 24);
+    const [avail1, avail2] = await Promise.all([
+      isFullDayAvailable(toolId, date, settings),
+      isFullDayAvailable(toolId, day2, settings),
+    ]);
+    return !avail1 || !avail2;
+  }
   if (hireType === '1day') {
     const avail = await isFullDayAvailable(toolId, date, settings);
     return !avail;

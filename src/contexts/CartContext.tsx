@@ -8,14 +8,14 @@ export interface CartItem {
 
 interface CartState {
   items: CartItem[];
-  hireType: '4hr' | '1day';
+  hireType: '4hr' | '1day' | '2day';
 }
 
 type CartAction =
   | { type: 'ADD_ITEM'; tool: Tool; quantity?: number }
   | { type: 'REMOVE_ITEM'; toolId: string }
   | { type: 'UPDATE_QUANTITY'; toolId: string; quantity: number }
-  | { type: 'SET_HIRE_TYPE'; hireType: '4hr' | '1day' }
+  | { type: 'SET_HIRE_TYPE'; hireType: '4hr' | '1day' | '2day' }
   | { type: 'CLEAR_CART' };
 
 const CartContext = createContext<{

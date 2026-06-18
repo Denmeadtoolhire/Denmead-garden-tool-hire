@@ -31,10 +31,10 @@ const CartPage = () => {
     );
   }
 
-  const total = state.items.reduce((sum, item) => {
-    const price = state.hireType === '4hr' ? item.tool.price_4hr : item.tool.price_1day;
-    return sum + price * item.quantity;
-  }, 0);
+  const getPrice = (tool: typeof state.items[0]['tool']) =>
+    state.hireType === '4hr' ? tool.price_4hr : state.hireType === '2day' ? tool.price_2day : tool.price_1day;
+
+  const total = state.items.reduce((sum, item) => sum + getPrice(item.tool) * item.quantity, 0);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 md:py-12">
@@ -69,14 +69,14 @@ const CartPage = () => {
                 <div className="flex-1 text-center sm:text-left">
                   <h3 className="text-lg font-bold text-gray-900 mb-1">{item.tool.name}</h3>
                   <p className="text-gray-500 text-sm">
-                    £{Number(state.hireType === '4hr' ? item.tool.price_4hr : item.tool.price_1day).toFixed(2)}{' '}
-                    per {state.hireType === '4hr' ? '4hr' : 'full day'}
+                    £{Number(getPrice(item.tool)).toFixed(2)}{' '}
+                    per {state.hireType === '4hr' ? '4hr' : state.hireType === '2day' ? '2 days' : 'full day'}
                   </p>
                 </div>
 
                 <div className="text-center sm:text-right flex flex-col items-center sm:items-end justify-between">
                   <p className="text-xl font-bold text-brand-green mb-2">
-                    £{Number(state.hireType === '4hr' ? item.tool.price_4hr : item.tool.price_1day).toFixed(2)}
+                    £{Number(getPrice(item.tool)).toFixed(2)}
                   </p>
                   <button
                     onClick={() => dispatch({ type: 'REMOVE_ITEM', toolId: item.tool.id })}
@@ -109,7 +109,7 @@ const CartPage = () => {
             <div className="mb-5 pb-4 border-b border-gray-100">
               <p className="text-xs font-semibold text-gray-500 mb-1">Hire Type</p>
               <p className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                {state.hireType === '4hr' ? <><Clock size={14} /> 4 Hours</> : <><Calendar size={14} /> Full Day</>}
+                {state.hireType === '4hr' ? <><Clock size={14} /> 4 Hours</> : state.hireType === '2day' ? <><Calendar size={14} /> 2 Days</> : <><Calendar size={14} /> Full Day</>}
               </p>
               <p className="text-xs text-gray-400 mt-1">
                 To change hire type,{' '}
@@ -125,14 +125,14 @@ const CartPage = () => {
                   {format(parseISO(initialDate), 'EEEE d MMMM yyyy')}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {state.hireType === '1day' ? `From ${initialTime} (full day)` : initialTime}
+                  {state.hireType === '4hr' ? initialTime : `From ${initialTime} (${state.hireType === '2day' ? '2 days' : 'full day'})`}
                 </p>
               </div>
             )}
 
             <div className="space-y-2 mb-4 pb-4 border-b border-gray-200">
               {state.items.map((item) => {
-                const price = state.hireType === '4hr' ? item.tool.price_4hr : item.tool.price_1day;
+                const price = getPrice(item.tool);
                 return (
                   <div key={item.tool.id} className="flex justify-between text-sm text-gray-600">
                     <span className="truncate mr-2">{item.tool.name}</span>

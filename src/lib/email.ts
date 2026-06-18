@@ -80,10 +80,13 @@ function nl2br(text: string): string {
   return text.replace(/\n/g, '<br>');
 }
 
-function formatDateTime(startIso: string, endIso: string, hireType: '4hr' | '1day'): string {
+function formatDateTime(startIso: string, endIso: string, hireType: '4hr' | '1day' | '2day'): string {
   const start = parseISO(startIso);
   const end = parseISO(endIso);
   const dateStr = format(start, 'EEEE d MMMM yyyy');
+  if (hireType === '2day') {
+    return `${dateStr} – ${format(end, 'EEEE d MMMM yyyy')} (2 days)`;
+  }
   const timeStr =
     hireType === '1day'
       ? 'Full day'

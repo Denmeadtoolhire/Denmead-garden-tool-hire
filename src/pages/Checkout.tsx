@@ -88,20 +88,22 @@ const CheckoutPage = () => {
         const date = new Date(selectedDate);
         const toolIds = cartState.items.map((item) => item.tool.id);
 
-        if (hireType === '1day') {
-          const available = await isFullDayAvailableForMultiTools(toolIds, date, settings);
+        if (hireType === '1day' || hireType === '2day') {
+          const day2 = hireType === '2day' ? new Date(date.getTime() + 24 * 60 * 60 * 1000) : null;
+          const available = hireType === '2day'
+            ? (await isFullDayAvailableForMultiTools(toolIds, date, settings)) &&
+              (await isFullDayAvailableForMultiTools(toolIds, day2!, settings))
+            : await isFullDayAvailableForMultiTools(toolIds, date, settings);
           if (available) {
             const openTime = getDayOpeningTime(settings, date);
-            const closeTime = getDayClosingTime(settings, date);
+            const closeTime = hireType === '2day'
+              ? getDayClosingTime(settings, day2!)
+              : getDayClosingTime(settings, date);
             const openDate = setTimeOnDate(date, openTime);
-            setAvailableSlots([
-              {
-                start: openDate,
-                end: date,
-                label: `Full day (${openTime} – ${closeTime})`,
-                available: true,
-              },
-            ]);
+            const label = hireType === '2day'
+              ? `2 days from ${openTime}`
+              : `Full day (${openTime} – ${closeTime})`;
+            setAvailableSlots([{ start: openDate, end: date, label, available: true }]);
           } else {
             setAvailableSlots([]);
           }
@@ -132,7 +134,7 @@ const CheckoutPage = () => {
     hireType && cartState.items.length > 0
       ? cartState.items.reduce((sum, item) => {
           const price =
-            hireType === '4hr' ? item.tool.price_4hr : item.tool.price_1day;
+            hireType === '4hr' ? item.tool.price_4hr : hireType === '2day' ? item.tool.price_2day : item.tool.price_1day;
           return sum + price * item.quantity;
         }, 0)
       : 0;
@@ -151,6 +153,11 @@ const CheckoutPage = () => {
       let endTime = new Date(startTime);
       if (hireType === '4hr') {
         endTime.setHours(endTime.getHours() + 4);
+      } else if (hireType === '2day') {
+        const day2 = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
+        const [ch, cm] = getDayClosingTime(settings, day2).split(':').map(Number);
+        endTime = new Date(day2);
+        endTime.setHours(ch, cm, 0, 0);
       } else {
         const [ch, cm] = getDayClosingTime(settings, startTime).split(':').map(Number);
         endTime.setHours(ch, cm, 0, 0);
@@ -220,7 +227,7 @@ const CheckoutPage = () => {
         tool_id: item.tool.id,
         quantity: item.quantity,
         price_at_booking:
-          hireType === '4hr' ? item.tool.price_4hr : item.tool.price_1day,
+          hireType === '4hr' ? item.tool.price_4hr : hireType === '2day' ? item.tool.price_2day : item.tool.price_1day,
       }));
 
       const { error: itemsError } = await supabase
@@ -291,7 +298,7 @@ const CheckoutPage = () => {
       {/* Hire type summary banner */}
       <div className="bg-green-50 border border-brand-green rounded-xl px-4 py-3 mb-4 flex items-center justify-between">
         <span className="text-brand-green font-semibold text-sm">
-          Hire period: <strong>{hireType === '4hr' ? '4 Hours' : 'Full Day'}</strong>
+          Hire period: <strong>{hireType === '4hr' ? '4 Hours' : hireType === '2day' ? '2 Days' : 'Full Day'}</strong>
           {' · '}Total: <strong>£{cartTotal.toFixed(2)}</strong>
           {cartState.items.length > 1 ? ` · ${cartState.items.length} tools` : ''}
         </span>
@@ -338,6 +345,8 @@ const CheckoutPage = () => {
                         <p className="text-sm text-amber-800 mt-1">
                           {hireType === '4hr'
                             ? 'No 4-hour slots available for all selected tools on this date.'
+                            : hireType === '2day'
+                            ? 'Not available for 2 days from this date — one or both days may be booked.'
                             : 'Full-day hire not available for all selected tools on this date.'}
                         </p>
                         <p className="text-sm text-amber-800 mt-1">Try another date or remove some items from your cart.</p>
@@ -529,7 +538,7 @@ const CheckoutPage = () => {
               <div>
                 <span className="text-gray-600">Hire Type:</span>
                 <span className="font-semibold text-gray-900 ml-2">
-                  {hireType === '4hr' ? '4 Hours' : 'Full Day'}
+                  {hireType === '4hr' ? '4 Hours' : hireType === '2day' ? '2 Days' : 'Full Day'}
                 </span>
               </div>
               <div>

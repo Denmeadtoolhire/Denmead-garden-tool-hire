@@ -17,19 +17,19 @@ const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
   const { dispatch } = useCart();
   const navigate = useNavigate();
   const [showAvailability, setShowAvailability] = useState(false);
-  const [calHireType, setCalHireType] = useState<'4hr' | '1day' | null>(null);
+  const [calHireType, setCalHireType] = useState<'4hr' | '1day' | '2day' | null>(null);
   const [pickedDate, setPickedDate] = useState<Date | null>(null);
   const [timeSlots, setTimeSlots] = useState<Array<{ start: Date; end: Date; label: string; available: boolean }>>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
   const handleDatePicked = async (date: Date) => {
     if (!settings || !calHireType) return;
-    if (calHireType === '1day') {
-      // Full day — no time selection needed, proceed immediately
+    if (calHireType === '1day' || calHireType === '2day') {
+      // Full day / 2 day — no time slot selection needed, proceed immediately
       const openTime = getDayOpeningTime(settings, date);
       const openDate = setTimeOnDate(date, openTime);
       const initialTime = format(openDate, 'HH:mm');
-      dispatch({ type: 'SET_HIRE_TYPE', hireType: '1day' });
+      dispatch({ type: 'SET_HIRE_TYPE', hireType: calHireType });
       dispatch({ type: 'ADD_ITEM', tool });
       setShowAvailability(false);
       navigate('/booking/cart', { state: { initialDate: format(date, 'yyyy-MM-dd'), initialTime } });
@@ -98,14 +98,18 @@ const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
           )}
 
           {/* Prices */}
-          <div className="mt-auto mb-4 flex gap-4">
+          <div className="mt-auto mb-4 flex flex-wrap gap-3">
             <span className="flex items-center gap-1.5 text-sm text-gray-600">
               <Clock size={13} />
               4hr — <strong className="text-brand-green">£{Number(tool.price_4hr).toFixed(2)}</strong>
             </span>
             <span className="flex items-center gap-1.5 text-sm text-gray-600">
               <Calendar size={13} />
-              Full day — <strong className="text-brand-green">£{Number(tool.price_1day).toFixed(2)}</strong>
+              1 day — <strong className="text-brand-green">£{Number(tool.price_1day).toFixed(2)}</strong>
+            </span>
+            <span className="flex items-center gap-1.5 text-sm text-gray-600">
+              <Calendar size={13} />
+              2 days — <strong className="text-brand-green">£{Number(tool.price_2day).toFixed(2)}</strong>
             </span>
           </div>
 
@@ -149,7 +153,7 @@ const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
             <p className={`text-xs font-semibold mb-2 ${calHireType ? 'text-gray-400' : 'text-brand-green'}`}>
               Step 1 — Select hire type
             </p>
-            <div className={`flex rounded-xl overflow-hidden border mb-5 ${!calHireType ? 'border-brand-green ring-2 ring-brand-green ring-opacity-30' : 'border-gray-200'}`}>
+            <div className={`flex flex-col rounded-xl overflow-hidden border mb-5 ${!calHireType ? 'border-brand-green ring-2 ring-brand-green ring-opacity-30' : 'border-gray-200'}`}>
               <button
                 onClick={() => { setCalHireType('4hr'); setPickedDate(null); setTimeSlots([]); }}
                 className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-bold transition-colors ${
@@ -160,11 +164,19 @@ const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
               </button>
               <button
                 onClick={() => { setCalHireType('1day'); setPickedDate(null); setTimeSlots([]); }}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-bold border-l border-gray-200 transition-colors ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-bold border-t border-gray-200 transition-colors ${
                   calHireType === '1day' ? 'bg-brand-green text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
                 }`}
               >
-                <Calendar size={14} /> Full Day — £{Number(tool.price_1day).toFixed(2)}
+                <Calendar size={14} /> 1 Day — £{Number(tool.price_1day).toFixed(2)}
+              </button>
+              <button
+                onClick={() => { setCalHireType('2day'); setPickedDate(null); setTimeSlots([]); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-3 text-sm font-bold border-t border-gray-200 transition-colors ${
+                  calHireType === '2day' ? 'bg-brand-green text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <Calendar size={14} /> 2 Days — £{Number(tool.price_2day).toFixed(2)}
               </button>
             </div>
 
