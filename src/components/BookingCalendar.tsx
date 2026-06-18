@@ -40,10 +40,10 @@ const BookingCalendar = ({
   const [loadingDates, setLoadingDates] = useState(false);
 
   useEffect(() => {
-    loadMonthAvailability();
+    loadMonthAvailability(hireType);
   }, [viewMonth, toolId, hireType]);
 
-  const loadMonthAvailability = async () => {
+  const loadMonthAvailability = async (currentHireType: '4hr' | '1day' | '2day') => {
     setLoadingDates(true);
     const days = eachDayOfInterval({
       start: startOfMonth(viewMonth),
@@ -54,7 +54,7 @@ const BookingCalendar = ({
     await Promise.all(
       days.map(async (day) => {
         if (!isDateAvailableForBooking(day, settings)) return;
-        const fullyBooked = await isDayFullyBooked(toolId, day, settings, hireType);
+        const fullyBooked = await isDayFullyBooked(toolId, day, settings, currentHireType);
         if (fullyBooked) booked.add(format(day, 'yyyy-MM-dd'));
       })
     );
