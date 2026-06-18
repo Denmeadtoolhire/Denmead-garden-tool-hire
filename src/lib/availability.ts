@@ -181,6 +181,8 @@ export async function isDayFullyBooked(
 ): Promise<boolean> {
   if (hireType === '2day') {
     const day2 = addHours(date, 24);
+    // If day 2 is a closed day, this start date can't be booked as a 2-day hire
+    if (!isDateAvailableForBooking(day2, settings)) return true;
     const [avail1, avail2] = await Promise.all([
       isFullDayAvailable(toolId, date, settings),
       isFullDayAvailable(toolId, day2, settings),
