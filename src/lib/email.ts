@@ -1,32 +1,17 @@
 /**
- * Email functions using the Brevo API via direct fetch.
- *
- * IMPORTANT: VITE_BREVO_API_KEY is compiled into the frontend bundle and
- * therefore visible to anyone who inspects the JS. These email functions
- * should ideally be moved to a Supabase Edge Function so the API key stays
- * server-side. For now they work via direct Brevo API calls from the browser.
+ * Email functions — sends via Supabase Edge Function (send-email).
+ * The Brevo API key lives as a Supabase secret and is never exposed in the browser.
  */
 
-import type { Booking, Tool, Settings } from './supabase';
+import type { Booking, Settings } from './supabase';
 import { supabase } from './supabase';
 import { format, parseISO } from 'date-fns';
 
 const DRIVE_IMAGE = 'https://res.cloudinary.com/da5zsuxlz/image/upload/c_fill,w_600,h_300,g_auto/v1781712224/Screenshot_20240510-133757_lg40gr.png';
 
-const FROM_ADDRESS = 'bookings@denmeadtoolhire.co.uk';
-const FROM_NAME = 'Denmead Tool Hire';
 const ADMIN_EMAIL = 'denmeadtoolhire@gmail.com';
 const PICKUP_ADDRESS = '1 Inhams Lane, Denmead, PO7 6LX';
 const PHONE = '07889765153';
-
-function getBrevoKey(): string | null {
-  const key = import.meta.env.VITE_BREVO_API_KEY;
-  if (!key) {
-    console.warn('Brevo API key not configured — email not sent');
-    return null;
-  }
-  return key;
-}
 
 async function getSettings(): Promise<Settings | null> {
   try {
@@ -42,34 +27,28 @@ async function getSettings(): Promise<Settings | null> {
   }
 }
 
-async function sendEmail(apiKey: string, payload: {
+async function sendEmail(payload: {
   to: string[];
   subject: string;
   html: string;
-  from?: string;
-  fromName?: string;
 }): Promise<void> {
   try {
-    const brevoPayload = {
-      sender: { name: payload.fromName || FROM_NAME, email: payload.from || FROM_ADDRESS },
-      to: payload.to.map(email => ({ email })),
-      subject: payload.subject,
-      htmlContent: payload.html,
-    };
-    console.log('Sending email via Brevo to:', payload.to, 'subject:', payload.subject);
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    console.log('Sending email via Edge Function to:', payload.to, 'subject:', payload.subject);
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'api-key': apiKey,
+        'Authorization': `Bearer ${supabaseKey}`,
       },
-      body: JSON.stringify(brevoPayload),
+      body: JSON.stringify(payload),
     });
     const responseText = await response.text();
     if (!response.ok) {
       console.error('Failed to send email. Status:', response.status, 'Response:', responseText);
     } else {
-      console.log('Email sent successfully:', responseText);
+      console.log('Email sent successfully');
     }
   } catch (err) {
     console.error('Email send error:', err);
@@ -189,9 +168,6 @@ function generateOutlookUrl(
  * Email 1: Sent to customer when they submit a booking request.
  */
 export async function sendRequestReceivedEmail(booking: Booking, toolNames: string[]): Promise<void> {
-  const key = getBrevoKey();
-  if (!key) return;
-
   const settings = await getSettings();
   const subject = settings?.request_received_email_subject || 'Booking Request Received - Denmead Tool Hire';
   const bodyText = settings?.request_received_email_body || 'Thank you for your booking request! We have received your request and will review it shortly. You will receive an email confirmation once we have approved your booking.';
@@ -205,7 +181,7 @@ export async function sendRequestReceivedEmail(booking: Booking, toolNames: stri
     ${baseFooter()}
   `;
 
-  await sendEmail(key, {
+  await sendEmail({
     to: [booking.customer_email],
     subject,
     html,
@@ -216,8 +192,6 @@ export async function sendRequestReceivedEmail(booking: Booking, toolNames: stri
  * Email 2: Sent to customer when admin approves their booking.
  */
 export async function sendApprovalEmail(booking: Booking, toolNames: string[]): Promise<void> {
-  const key = getBrevoKey();
-  if (!key) return;
 
   const settings = await getSettings();
   const subject = settings?.confirmation_email_subject || 'Your Booking is Confirmed - Denmead Tool Hire';
@@ -297,7 +271,7 @@ export async function sendApprovalEmail(booking: Booking, toolNames: string[]): 
     ${baseFooter()}
   `;
 
-  await sendEmail(key, {
+  await sendEmail({
     to: [booking.customer_email],
     subject: 'Booking Confirmed! - Denmead Tool Hire',
     html,
@@ -315,8 +289,6 @@ export async function sendAlternativeSuggestionEmail(
   acceptUrl: string,
   declineUrl: string
 ): Promise<void> {
-  const key = getBrevoKey();
-  if (!key) return;
 
   const settings = await getSettings();
   const subject = settings?.alternative_email_subject || 'Alternative Time Suggested - Denmead Tool Hire';
@@ -351,7 +323,7 @@ export async function sendAlternativeSuggestionEmail(
     ${baseFooter()}
   `;
 
-  await sendEmail(key, {
+  await sendEmail({
     to: [booking.customer_email],
     subject,
     html,
@@ -362,8 +334,6 @@ export async function sendAlternativeSuggestionEmail(
  * Email 4: Sent to admin when a new booking request comes in.
  */
 export async function sendAdminNewRequestEmail(booking: Booking, toolNames: string[]): Promise<void> {
-  const key = getBrevoKey();
-  if (!key) return;
 
   const dateTime = formatDateTime(booking.start_time, booking.end_time, booking.hire_type);
   const origin = 'https://denmeadtoolhire.co.uk';
@@ -414,7 +384,7 @@ export async function sendAdminNewRequestEmail(booking: Booking, toolNames: stri
     ${baseFooter()}
   `;
 
-  await sendEmail(key, {
+  await sendEmail({
     to: [ADMIN_EMAIL],
     subject: `New Booking Request - ${subjectToolLabel} - ${booking.customer_name}`,
     html,
@@ -425,8 +395,6 @@ export async function sendAdminNewRequestEmail(booking: Booking, toolNames: stri
  * Email 5: Sent to admin when a customer cancels their booking.
  */
 export async function sendAdminCancellationEmail(booking: Booking, toolNames: string[] = []): Promise<void> {
-  const key = getBrevoKey();
-  if (!key) return;
 
   const dateTime = formatDateTime(booking.start_time, booking.end_time, booking.hire_type);
   const toolLabel = toolNames.length > 1 ? 'Tools' : 'Tool';
@@ -457,7 +425,7 @@ export async function sendAdminCancellationEmail(booking: Booking, toolNames: st
     ${baseFooter()}
   `;
 
-  await sendEmail(key, {
+  await sendEmail({
     to: [ADMIN_EMAIL],
     subject: `Booking Cancelled - ${booking.customer_name} - ${booking.id.substring(0, 8).toUpperCase()}`,
     html,
