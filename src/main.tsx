@@ -21,6 +21,7 @@ import CustomersPage from './pages/admin/Customers';
 import UnsubscribePage from './pages/admin/Unsubscribe';
 import BlockedDates from './pages/admin/BlockedDates';
 import NewBooking from './pages/admin/NewBooking';
+import BookingCalendarPage from './pages/admin/BookingCalendar';
 import './index.css';
 
 function ScrollToTop() {
@@ -162,6 +163,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <NewBooking />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/calendar"
+            element={
+              <ProtectedRoute>
+                <BookingCalendarPage />
               </ProtectedRoute>
             }
           />
