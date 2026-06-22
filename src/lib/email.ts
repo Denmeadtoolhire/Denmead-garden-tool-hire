@@ -362,7 +362,7 @@ export async function sendAdminNewRequestEmail(booking: Booking, toolNames: stri
       <table style="width: 100%; border-collapse: collapse;">
         <tr><td style="padding: 8px 0; color: #666; width: 35%;">Name:</td><td style="padding: 8px 0;">${booking.customer_name}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Email:</td><td style="padding: 8px 0;"><a href="mailto:${booking.customer_email}">${booking.customer_email}</a></td></tr>
-        <tr><td style="padding: 8px 0; color: #666;">Phone:</td><td style="padding: 8px 0;"><a href="sms:${booking.customer_phone}">${booking.customer_phone}</a></td></tr>
+        <tr><td style="padding: 8px 0; color: #666;">Phone:</td><td style="padding: 8px 0;"><a href="sms:${booking.customer_phone}" style="display:inline-block; background:#1a6b2f; color:white; font-weight:bold; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:14px;">💬 ${booking.customer_phone}</a></td></tr>
         ${booking.notes ? `<tr><td style="padding: 8px 0; color: #666;">Notes:</td><td style="padding: 8px 0;">${booking.notes}</td></tr>` : ''}
       </table>
     </div>
@@ -418,7 +418,7 @@ export async function sendAdminCancellationEmail(booking: Booking, toolNames: st
       <table style="width: 100%; border-collapse: collapse;">
         <tr><td style="padding: 8px 0; color: #666; width: 35%;">Name:</td><td style="padding: 8px 0;">${booking.customer_name}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Email:</td><td style="padding: 8px 0;"><a href="mailto:${booking.customer_email}">${booking.customer_email}</a></td></tr>
-        <tr><td style="padding: 8px 0; color: #666;">Phone:</td><td style="padding: 8px 0;"><a href="sms:${booking.customer_phone}">${booking.customer_phone}</a></td></tr>
+        <tr><td style="padding: 8px 0; color: #666;">Phone:</td><td style="padding: 8px 0;"><a href="sms:${booking.customer_phone}" style="display:inline-block; background:#1a6b2f; color:white; font-weight:bold; padding:6px 14px; border-radius:6px; text-decoration:none; font-size:14px;">💬 ${booking.customer_phone}</a></td></tr>
       </table>
     </div>
     <p style="color: #666;">This slot is now free. No action needed unless you wish to follow up with the customer.</p>
