@@ -48,6 +48,7 @@ export type Booking = {
   start_time: string;
   end_time: string;
   status: 'pending' | 'approved' | 'alternative_suggested' | 'cancelled';
+  paid: boolean;
   notes: string | null;
   created_at: string;
   suggested_start_time: string | null;

@@ -4,7 +4,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/lib/supabase';
 import type { Booking, BookingItem } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
-import { CheckCircle, Clock, AlertTriangle, X } from 'lucide-react';
+import { CheckCircle, Clock, AlertTriangle, X, Phone, MessageCircle, BadgeCheck } from 'lucide-react';
 import { sendApprovalEmail, sendAlternativeSuggestionEmail } from '@/lib/email';
 
 type BookingWithDetails = Booking & {
@@ -259,6 +259,11 @@ const ManageBookings = () => {
     await loadBookings();
   };
 
+  const handleMarkPaid = async (id: string, paid: boolean) => {
+    await supabase.from('bookings').update({ paid }).eq('id', id);
+    setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, paid } : b)));
+  };
+
   const pending = bookings.filter((b) => b.status === 'pending' || b.status === 'alternative_suggested');
   const approved = bookings.filter((b) => b.status === 'approved');
 
@@ -454,10 +459,24 @@ const ManageBookings = () => {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-gray-900">{b.customer_name}</span>
                       {statusBadge(b.status)}
+                      {b.paid && (
+                        <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700 flex items-center gap-1">
+                          <BadgeCheck size={12} /> Paid
+                        </span>
+                      )}
                     </div>
-                    <p className="text-sm text-gray-600">
-                      {b.customer_email} &bull; {b.customer_phone}
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap mt-1">
+                      <span className="text-sm text-gray-600">{b.customer_email}</span>
+                      <a href={`tel:${b.customer_phone}`} className="inline-flex items-center gap-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1 rounded-full transition-colors">
+                        <Phone size={11} /> {b.customer_phone}
+                      </a>
+                      <a href={`https://wa.me/${b.customer_phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold bg-green-100 hover:bg-green-200 text-green-700 px-2.5 py-1 rounded-full transition-colors">
+                        <MessageCircle size={11} /> WhatsApp
+                      </a>
+                      <a href={`sms:${b.customer_phone}`} className="inline-flex items-center gap-1 text-xs font-semibold bg-blue-100 hover:bg-blue-200 text-blue-700 px-2.5 py-1 rounded-full transition-colors">
+                        💬 SMS
+                      </a>
+                    </div>
                     <p className="text-sm font-medium text-gray-800 mt-1">
                       {getToolNames(b)} &bull; {b.hire_type === '4hr' ? '4 Hours' : 'Full Day'}
                     </p>
@@ -475,7 +494,7 @@ const ManageBookings = () => {
                       <p className="text-xs text-gray-500 mt-1 italic">Note: {b.notes}</p>
                     )}
                   </div>
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex flex-wrap gap-2 shrink-0">
                     <button
                       onClick={() => handleApprove(b)}
                       disabled={approvingId === b.id}
@@ -495,6 +514,17 @@ const ManageBookings = () => {
                     >
                       <Clock size={14} />
                       Suggest Alternative
+                    </button>
+                    <button
+                      onClick={() => handleMarkPaid(b.id, !b.paid)}
+                      className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg transition-colors ${
+                        b.paid
+                          ? 'bg-blue-600 text-white hover:bg-blue-700'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      <BadgeCheck size={14} />
+                      {b.paid ? 'Paid' : 'Mark Paid'}
                     </button>
                   </div>
                 </div>
@@ -546,21 +576,43 @@ const ManageBookings = () => {
                         <p>{format(parseISO(b.start_time), 'dd/MM/yyyy')}</p>
                         <p className="text-xs text-gray-500">{formatBookingTime(b)}</p>
                       </td>
-                      <td className="px-4 py-3 text-gray-500 hidden lg:table-cell">
-                        {b.customer_phone}
+                      <td className="px-4 py-3 hidden lg:table-cell">
+                        <div className="flex flex-col gap-1">
+                          <a href={`tel:${b.customer_phone}`} className="inline-flex items-center gap-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full w-fit transition-colors">
+                            <Phone size={10} /> {b.customer_phone}
+                          </a>
+                          <a href={`https://wa.me/${b.customer_phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold bg-green-100 hover:bg-green-200 text-green-700 px-2 py-0.5 rounded-full w-fit transition-colors">
+                            <MessageCircle size={10} /> WhatsApp
+                          </a>
+                        </div>
                       </td>
                       {tab === 'all' && (
                         <td className="px-4 py-3">{statusBadge(b.status)}</td>
                       )}
                       <td className="px-4 py-3">
-                        {b.status === 'approved' && (
-                          <button
-                            onClick={() => setCancelId(b.id)}
-                            className="text-xs text-red-500 hover:text-red-700 font-medium whitespace-nowrap"
-                          >
-                            Cancel
-                          </button>
-                        )}
+                        <div className="flex flex-col gap-1 items-end">
+                          {b.status === 'approved' && (
+                            <>
+                              <button
+                                onClick={() => handleMarkPaid(b.id, !b.paid)}
+                                className={`text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap flex items-center gap-1 transition-colors ${
+                                  b.paid
+                                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                }`}
+                              >
+                                <BadgeCheck size={11} />
+                                {b.paid ? 'Paid' : 'Mark Paid'}
+                              </button>
+                              <button
+                                onClick={() => setCancelId(b.id)}
+                                className="text-xs text-red-500 hover:text-red-700 font-medium whitespace-nowrap"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
