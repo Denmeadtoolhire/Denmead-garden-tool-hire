@@ -431,3 +431,59 @@ export async function sendAdminCancellationEmail(booking: Booking, toolNames: st
     html,
   });
 }
+
+const FACEBOOK_REVIEW_URL = 'https://www.facebook.com/profile.php?id=61553703941078&sk=reviews';
+const TOOLS_URL = 'https://denmeadtoolhire.co.uk/tools';
+
+/**
+ * Email 6: Sent to customer when admin marks their booking as paid (hire complete).
+ */
+export async function sendHireCompleteEmail(booking: Booking, toolNames: string[]): Promise<void> {
+  const dateTime = formatDateTime(booking.start_time, booking.end_time, booking.hire_type);
+  const toolLabel = toolNames.length > 1 ? 'Tools hired' : 'Tool hired';
+  const toolValue = toolNames.length > 1
+    ? `<ul style="margin: 4px 0; padding-left: 18px;">${toolNames.map(n => `<li>${n}</li>`).join('')}</ul>`
+    : `<strong>${toolNames[0] ?? '—'}</strong>`;
+
+  const html = `
+    ${baseHeader('Thanks for hiring with us!')}
+    <p>Hi ${booking.customer_name},</p>
+    <p>We hope everything went well with your hire. Thank you for choosing Denmead Tool &amp; Garden Hire — it's great to support our local community!</p>
+
+    <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0;">
+      <h3 style="color: #1a6b2f; margin-top: 0;">Your Hire Summary</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 8px 0; color: #666; width: 35%; vertical-align: top;">${toolLabel}:</td><td style="padding: 8px 0;">${toolValue}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666;">Date:</td><td style="padding: 8px 0;">${dateTime}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666;">Reference:</td><td style="padding: 8px 0; font-family: monospace;">${booking.id.substring(0, 8).toUpperCase()}</td></tr>
+      </table>
+    </div>
+
+    <div style="background: #fff3cd; border: 1px solid #f5c518; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+      <p style="margin: 0 0 8px; font-weight: bold; color: #1a6b2f; font-size: 16px;">⭐ Enjoyed your hire?</p>
+      <p style="margin: 0 0 16px; color: #555; font-size: 14px;">Reviews help other local residents find us — it only takes a minute!</p>
+      <a href="${FACEBOOK_REVIEW_URL}"
+         style="display: inline-block; background: #1877f2; color: white; font-weight: bold; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-size: 15px;">
+        👍 Leave a Facebook Review
+      </a>
+    </div>
+
+    <div style="background: #f0f9f4; border: 1px solid #c3e6cb; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+      <p style="margin: 0 0 8px; font-weight: bold; color: #1a6b2f; font-size: 16px;">Need tools again?</p>
+      <p style="margin: 0 0 16px; color: #555; font-size: 14px;">Browse our full range and book online anytime.</p>
+      <a href="${TOOLS_URL}"
+         style="display: inline-block; background: #1a6b2f; color: white; font-weight: bold; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-size: 15px;">
+        🔧 Browse Our Tools
+      </a>
+    </div>
+
+    <p style="color: #666; font-size: 13px;">Questions or feedback? Call us on <strong>${PHONE}</strong> or email <strong>${ADMIN_EMAIL}</strong>.</p>
+    ${baseFooter()}
+  `;
+
+  await sendEmail({
+    to: [booking.customer_email],
+    subject: 'Thanks for hiring with Denmead Tool Hire!',
+    html,
+  });
+}

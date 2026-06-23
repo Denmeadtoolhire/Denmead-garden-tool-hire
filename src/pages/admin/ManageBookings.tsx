@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 import type { Booking, BookingItem } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { CheckCircle, Clock, AlertTriangle, X, Phone, MessageCircle, BadgeCheck } from 'lucide-react';
-import { sendApprovalEmail, sendAlternativeSuggestionEmail } from '@/lib/email';
+import { sendApprovalEmail, sendAlternativeSuggestionEmail, sendHireCompleteEmail } from '@/lib/email';
 
 type BookingWithDetails = Booking & {
   tools?: { name: string; price_4hr: number; price_1day: number } | null;
@@ -262,6 +262,15 @@ const ManageBookings = () => {
   const handleMarkPaid = async (id: string, paid: boolean) => {
     await supabase.from('bookings').update({ paid }).eq('id', id);
     setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, paid } : b)));
+    if (paid) {
+      const b = bookings.find((x) => x.id === id);
+      if (b) {
+        const toolNames = b.booking_items && b.booking_items.length > 0
+          ? b.booking_items.map((bi) => bi.tools?.name ?? 'Unknown')
+          : b.tools ? [b.tools.name] : ['Unknown'];
+        sendHireCompleteEmail(b, toolNames).catch(console.error);
+      }
+    }
   };
 
   const pending = bookings.filter((b) => b.status === 'pending' || b.status === 'alternative_suggested');
