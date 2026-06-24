@@ -104,6 +104,10 @@ const ManageBookings = () => {
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
 
+  // Delete confirm
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
   // Success flash
   const [flash, setFlash] = useState('');
 
@@ -275,6 +279,15 @@ const ManageBookings = () => {
     await loadBookings();
   };
 
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
+    await supabase.from('bookings').delete().eq('id', deleteId);
+    setDeleteId(null);
+    setDeleting(false);
+    await loadBookings();
+  };
+
   const handleMarkPaid = async (id: string, paid: boolean) => {
     await supabase.from('bookings').update({ paid }).eq('id', id);
     setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, paid } : b)));
@@ -397,6 +410,38 @@ const ManageBookings = () => {
                   className="w-full border border-gray-200 py-2.5 rounded-lg hover:bg-gray-50 font-semibold"
                 >
                   Cancel & Choose Alternative
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete confirm modal */}
+        {deleteId && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl">
+              <div className="flex items-start gap-3 mb-4">
+                <AlertTriangle className="text-red-500 mt-0.5 shrink-0" size={22} />
+                <div>
+                  <h3 className="font-bold text-lg">Delete Booking?</h3>
+                  <p className="text-gray-600 text-sm mt-1">
+                    This will permanently delete the booking request. This cannot be undone.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 bg-red-600 text-white font-semibold py-2.5 rounded-lg hover:bg-red-700 disabled:opacity-60"
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+                <button
+                  onClick={() => setDeleteId(null)}
+                  className="flex-1 border border-gray-200 py-2.5 rounded-lg hover:bg-gray-50"
+                >
+                  Keep
                 </button>
               </div>
             </div>
@@ -553,6 +598,13 @@ const ManageBookings = () => {
                     >
                       <BadgeCheck size={14} />
                       {b.paid ? 'Paid' : 'Mark Paid'}
+                    </button>
+                    <button
+                      onClick={() => setDeleteId(b.id)}
+                      className="flex items-center gap-1.5 bg-red-100 text-red-600 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-red-200 transition-colors"
+                    >
+                      <X size={14} />
+                      Delete
                     </button>
                   </div>
                 </div>
