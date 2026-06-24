@@ -279,6 +279,12 @@ const ManageBookings = () => {
     await loadBookings();
   };
 
+  const handleComplete = async (id: string) => {
+    await supabase.from('bookings').update({ completed: true }).eq('id', id);
+    setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, completed: true } : b)));
+    showFlash('Booking marked as complete and archived.');
+  };
+
   const handleDelete = async () => {
     if (!deleteId) return;
     setDeleting(true);
@@ -303,7 +309,7 @@ const ManageBookings = () => {
   };
 
   const pending = bookings.filter((b) => b.status === 'pending' || b.status === 'alternative_suggested');
-  const approved = bookings.filter((b) => b.status === 'approved');
+  const approved = bookings.filter((b) => b.status === 'approved' && !b.completed);
 
   const tabData = tab === 'pending' ? pending : tab === 'approved' ? approved : bookings;
 
@@ -701,6 +707,15 @@ const ManageBookings = () => {
                           <BadgeCheck size={14} />
                           {b.paid ? 'Paid' : 'Mark Paid'}
                         </button>
+                        {b.paid && (
+                          <button
+                            onClick={() => handleComplete(b.id)}
+                            className="inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-lg bg-brand-green text-white hover:bg-brand-green-dark transition-colors"
+                          >
+                            <CheckCircle size={14} />
+                            Complete
+                          </button>
+                        )}
                         <button
                           onClick={() => setCancelId(b.id)}
                           className="text-xs text-red-500 hover:text-red-700 font-medium"
