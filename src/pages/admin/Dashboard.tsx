@@ -3,6 +3,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/lib/supabase';
 import { CalendarCheck, Wrench, Clock, XCircle } from 'lucide-react';
 import { format, parseISO, startOfDay, endOfDay } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import type { Booking } from '@/lib/supabase';
 
 type BookingWithTool = Booking & { tools: { name: string } | null };
@@ -13,6 +14,7 @@ const Dashboard = () => {
   const [toolCount, setToolCount] = useState(0);
   const [cancelledCount, setCancelledCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadDashboard();
@@ -41,10 +43,10 @@ const Dashboard = () => {
   };
 
   const stats = [
-    { label: 'Active Bookings', value: totalBookings, icon: CalendarCheck, color: 'text-brand-green' },
-    { label: "Today's Bookings", value: todayBookings.length, icon: Clock, color: 'text-blue-600' },
-    { label: 'Available Tools', value: toolCount, icon: Wrench, color: 'text-amber-600' },
-    { label: 'Cancellations', value: cancelledCount, icon: XCircle, color: 'text-red-500' },
+    { label: 'Active Bookings', value: totalBookings, icon: CalendarCheck, color: 'text-brand-green', to: '/admin/bookings?tab=approved' },
+    { label: "Today's Bookings", value: todayBookings.length, icon: Clock, color: 'text-blue-600', to: '/admin/bookings?tab=approved' },
+    { label: 'Available Tools', value: toolCount, icon: Wrench, color: 'text-amber-600', to: '/admin/tools' },
+    { label: 'Cancellations', value: cancelledCount, icon: XCircle, color: 'text-red-500', to: '/admin/bookings?tab=all' },
   ];
 
   return (
@@ -58,17 +60,18 @@ const Dashboard = () => {
           <>
             {/* Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              {stats.map(({ label, value, icon: Icon, color }) => (
-                <div
+              {stats.map(({ label, value, icon: Icon, color, to }) => (
+                <button
                   key={label}
-                  className="bg-white rounded-xl p-5 shadow-sm border border-gray-100"
+                  onClick={() => navigate(to)}
+                  className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 text-left hover:shadow-md hover:border-gray-200 transition-all"
                 >
                   <Icon className={color} size={24} />
                   <div className="mt-3">
                     <p className="text-2xl font-bold text-gray-900">{value}</p>
                     <p className="text-sm text-gray-500">{label}</p>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
 

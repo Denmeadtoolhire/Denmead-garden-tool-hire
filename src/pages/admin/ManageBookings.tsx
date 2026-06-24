@@ -67,10 +67,11 @@ const ManageBookings = () => {
   const [searchParams] = useSearchParams();
   const autoApproveId = searchParams.get('approve');
   const autoSuggestId = searchParams.get('suggest');
+  const tabParam = searchParams.get('tab') as Tab | null;
 
   const [bookings, setBookings] = useState<BookingWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>('pending');
+  const [tab, setTab] = useState<Tab>(tabParam ?? 'pending');
 
   // Approve state
   const [approvingId, setApprovingId] = useState<string | null>(null);
@@ -487,12 +488,15 @@ const ManageBookings = () => {
                       </a>
                     </div>
                     <p className="text-sm font-medium text-gray-800 mt-1">
-                      {getToolNames(b)} &bull; {b.hire_type === '4hr' ? '4 Hours' : 'Full Day'}
+                      {getToolNames(b)} &bull; {b.hire_type === '4hr' ? '4 Hours' : b.hire_type === '2day' ? '2 Days' : 'Full Day'}
                     </p>
                     <p className="text-sm text-gray-600">
                       {format(parseISO(b.start_time), 'EEEE d MMMM yyyy')} &bull;{' '}
                       {formatBookingTime(b)}
                     </p>
+                    {b.customer_address && (
+                      <p className="text-sm text-gray-500 mt-1">📍 {b.customer_address}</p>
+                    )}
                     {b.status === 'alternative_suggested' && b.suggested_start_time && (
                       <p className="text-sm text-blue-700 mt-1">
                         <Clock size={12} className="inline mr-1" />
@@ -557,6 +561,9 @@ const ManageBookings = () => {
                     <th className="text-left px-4 py-3 font-semibold text-gray-700 hidden lg:table-cell">
                       Phone
                     </th>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-700 hidden xl:table-cell">
+                      Address
+                    </th>
                     {tab === 'all' && (
                       <th className="text-left px-4 py-3 font-semibold text-gray-700">Status</th>
                     )}
@@ -584,6 +591,9 @@ const ManageBookings = () => {
                       <td className="px-4 py-3 text-gray-700 hidden md:table-cell whitespace-nowrap">
                         <p>{format(parseISO(b.start_time), 'dd/MM/yyyy')}</p>
                         <p className="text-xs text-gray-500">{formatBookingTime(b)}</p>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500 hidden xl:table-cell">
+                        {b.customer_address ?? '—'}
                       </td>
                       <td className="px-4 py-3 hidden lg:table-cell">
                         <div className="flex flex-col gap-1">
