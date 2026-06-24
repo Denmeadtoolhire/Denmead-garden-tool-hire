@@ -11,7 +11,7 @@ type BookingWithDetails = Booking & {
   tools?: { name: string; price_4hr: number; price_1day: number; price_2day: number } | null;
   booking_items?: Array<BookingItem & { tools?: { name: string; price_4hr: number; price_1day: number; price_2day: number } }>;
 };
-type Tab = 'pending' | 'approved' | 'all';
+type Tab = 'pending' | 'approved' | 'archived' | 'all';
 
 function statusBadge(status: Booking['status']) {
   switch (status) {
@@ -310,8 +310,9 @@ const ManageBookings = () => {
 
   const pending = bookings.filter((b) => b.status === 'pending' || b.status === 'alternative_suggested');
   const approved = bookings.filter((b) => b.status === 'approved' && !b.completed);
+  const archived = bookings.filter((b) => b.completed);
 
-  const tabData = tab === 'pending' ? pending : tab === 'approved' ? approved : bookings;
+  const tabData = tab === 'pending' ? pending : tab === 'approved' ? approved : tab === 'archived' ? archived : bookings;
 
   return (
     <AdminLayout>
@@ -326,8 +327,8 @@ const ManageBookings = () => {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
-          {(['pending', 'approved', 'all'] as Tab[]).map((t) => (
+        <div className="flex flex-wrap gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
+          {(['pending', 'approved', 'archived', 'all'] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -337,10 +338,15 @@ const ManageBookings = () => {
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {t === 'pending' ? 'Pending Requests' : t === 'approved' ? 'Approved' : 'All Bookings'}
+              {t === 'pending' ? 'Pending Requests' : t === 'approved' ? 'Approved' : t === 'archived' ? 'Archived' : 'All Bookings'}
               {t === 'pending' && pending.length > 0 && (
                 <span className="ml-2 bg-amber-500 text-white text-xs rounded-full px-1.5 py-0.5">
                   {pending.length}
+                </span>
+              )}
+              {t === 'archived' && archived.length > 0 && (
+                <span className="ml-2 bg-gray-400 text-white text-xs rounded-full px-1.5 py-0.5">
+                  {archived.length}
                 </span>
               )}
             </button>
