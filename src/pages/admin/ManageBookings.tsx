@@ -8,8 +8,8 @@ import { CheckCircle, Clock, AlertTriangle, X, Phone, MessageCircle, BadgeCheck 
 import { sendApprovalEmail, sendAlternativeSuggestionEmail, sendHireCompleteEmail } from '@/lib/email';
 
 type BookingWithDetails = Booking & {
-  tools?: { name: string; price_4hr: number; price_1day: number } | null;
-  booking_items?: Array<BookingItem & { tools?: { name: string } }>;
+  tools?: { name: string; price_4hr: number; price_1day: number; price_2day: number } | null;
+  booking_items?: Array<BookingItem & { tools?: { name: string; price_4hr: number; price_1day: number; price_2day: number } }>;
 };
 type Tab = 'pending' | 'approved' | 'all';
 
@@ -61,6 +61,21 @@ function getToolNames(b: BookingWithDetails): string {
     return b.booking_items.map(bi => bi.tools?.name || 'Unknown').join(', ');
   }
   return b.tools?.name ?? '—';
+}
+
+function getBookingTotal(b: BookingWithDetails): number {
+  if (b.booking_items && b.booking_items.length > 0) {
+    return b.booking_items.reduce((sum, bi) => {
+      if (bi.price_at_booking) return sum + bi.price_at_booking;
+      const t = bi.tools;
+      if (!t) return sum;
+      return sum + (b.hire_type === '4hr' ? t.price_4hr : b.hire_type === '2day' ? t.price_2day : t.price_1day);
+    }, 0);
+  }
+  if (b.tools) {
+    return b.hire_type === '4hr' ? b.tools.price_4hr : b.hire_type === '2day' ? b.tools.price_2day : b.tools.price_1day;
+  }
+  return 0;
 }
 
 const ManageBookings = () => {
@@ -115,8 +130,8 @@ const ManageBookings = () => {
       .from('bookings')
       .select(`
         *,
-        tools(name, price_4hr, price_1day),
-        booking_items(id, tool_id, quantity, price_at_booking, tools(name))
+        tools(name, price_4hr, price_1day, price_2day),
+        booking_items(id, tool_id, quantity, price_at_booking, tools(name, price_4hr, price_1day, price_2day))
       `)
       .order('created_at', { ascending: false });
     setBookings((data as BookingWithDetails[]) ?? []);
@@ -545,104 +560,107 @@ const ManageBookings = () => {
             ))}
           </div>
         ) : (
-          /* Approved / All — table layout */
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-100">
-                    <th className="text-left px-4 py-3 font-semibold text-gray-700">Customer</th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-700 hidden sm:table-cell">
-                      Tool
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-700 hidden md:table-cell">
-                      Date / Time
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-700 hidden lg:table-cell">
-                      Phone
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-700 hidden xl:table-cell">
-                      Address
-                    </th>
-                    {tab === 'all' && (
-                      <th className="text-left px-4 py-3 font-semibold text-gray-700">Status</th>
+          /* Approved / All — card layout */
+          <div className="space-y-4">
+            {tabData.length === 0 && (
+              <div className="bg-white rounded-xl p-10 text-center text-gray-500 border border-gray-100 shadow-sm">
+                No bookings in this view.
+              </div>
+            )}
+            {tabData.map((b) => {
+              const total = getBookingTotal(b);
+              return (
+                <div key={b.id} className={`bg-white rounded-xl border shadow-sm p-5 ${b.status === 'cancelled' ? 'opacity-50 border-gray-100' : 'border-gray-100'}`}>
+                  {/* Header row */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-gray-900 text-lg">{b.customer_name}</span>
+                        {statusBadge(b.status)}
+                        {b.paid && (
+                          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-blue-100 text-blue-700 flex items-center gap-1">
+                            <BadgeCheck size={12} /> Paid
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-500 mt-0.5">{b.customer_email}</p>
+                    </div>
+                    {total > 0 && (
+                      <div className="text-right shrink-0">
+                        <p className="text-xs text-gray-400">Amount due</p>
+                        <p className="text-2xl font-bold text-brand-green">£{total.toFixed(2)}</p>
+                      </div>
                     )}
-                    <th className="px-4 py-3" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {tabData.map((b) => (
-                    <tr
-                      key={b.id}
-                      className={`hover:bg-gray-50 transition-colors ${
-                        b.status === 'cancelled' ? 'opacity-50' : ''
-                      }`}
-                    >
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-gray-900">{b.customer_name}</p>
-                        <p className="text-xs text-gray-500">{b.customer_email}</p>
-                      </td>
-                      <td className="px-4 py-3 text-gray-700 hidden sm:table-cell">
-                        <p>{getToolNames(b)}</p>
-                        <p className="text-xs text-gray-500">
-                          {b.hire_type === '4hr' ? '4 Hours' : 'Full Day'}
-                        </p>
-                      </td>
-                      <td className="px-4 py-3 text-gray-700 hidden md:table-cell whitespace-nowrap">
-                        <p>{format(parseISO(b.start_time), 'dd/MM/yyyy')}</p>
-                        <p className="text-xs text-gray-500">{formatBookingTime(b)}</p>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-500 hidden xl:table-cell">
-                        {b.customer_address ?? '—'}
-                      </td>
-                      <td className="px-4 py-3 hidden lg:table-cell">
-                        <div className="flex flex-col gap-1">
-                          <a href={`tel:${b.customer_phone}`} className="inline-flex items-center gap-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full w-fit transition-colors">
-                            <Phone size={10} /> {b.customer_phone}
-                          </a>
-                          <a href={`https://wa.me/${b.customer_phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold bg-green-100 hover:bg-green-200 text-green-700 px-2 py-0.5 rounded-full w-fit transition-colors">
-                            <MessageCircle size={10} /> WhatsApp
-                          </a>
-                        </div>
-                      </td>
-                      {tab === 'all' && (
-                        <td className="px-4 py-3">{statusBadge(b.status)}</td>
-                      )}
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col gap-1 items-end">
-                          {b.status === 'approved' && (
-                            <>
-                              <button
-                                onClick={() => handleMarkPaid(b.id, !b.paid)}
-                                className={`text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap flex items-center gap-1 transition-colors ${
-                                  b.paid
-                                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                                }`}
-                              >
-                                <BadgeCheck size={11} />
-                                {b.paid ? 'Paid' : 'Mark Paid'}
-                              </button>
-                              <button
-                                onClick={() => setCancelId(b.id)}
-                                className="text-xs text-red-500 hover:text-red-700 font-medium whitespace-nowrap"
-                              >
-                                Cancel
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {tabData.length === 0 && (
-                <div className="px-5 py-10 text-center text-gray-500">
-                  No bookings in this view.
+                  </div>
+
+                  {/* Details grid */}
+                  <div className="bg-gray-50 rounded-lg p-3 space-y-2 mb-3 text-sm">
+                    <div className="flex gap-2">
+                      <span className="text-gray-400 w-20 shrink-0">Tool</span>
+                      <span className="font-medium text-gray-800">{getToolNames(b)}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-gray-400 w-20 shrink-0">Hire type</span>
+                      <span className="text-gray-700">{b.hire_type === '4hr' ? '4 Hours' : b.hire_type === '2day' ? '2 Days' : 'Full Day'}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-gray-400 w-20 shrink-0">Date</span>
+                      <span className="text-gray-700">{format(parseISO(b.start_time), 'EEE d MMM yyyy')}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-gray-400 w-20 shrink-0">Time</span>
+                      <span className="text-gray-700">{formatBookingTime(b)}</span>
+                    </div>
+                    {b.customer_address && (
+                      <div className="flex gap-2">
+                        <span className="text-gray-400 w-20 shrink-0">Address</span>
+                        <span className="text-gray-700">{b.customer_address}</span>
+                      </div>
+                    )}
+                    {b.notes && (
+                      <div className="flex gap-2">
+                        <span className="text-gray-400 w-20 shrink-0">Notes</span>
+                        <span className="text-gray-500 italic">{b.notes}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Contact + actions */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <a href={`tel:${b.customer_phone}`} className="inline-flex items-center gap-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1.5 rounded-full transition-colors">
+                      <Phone size={11} /> {b.customer_phone}
+                    </a>
+                    <a href={`https://wa.me/${b.customer_phone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold bg-green-100 hover:bg-green-200 text-green-700 px-2.5 py-1.5 rounded-full transition-colors">
+                      <MessageCircle size={11} /> WhatsApp
+                    </a>
+                    <a href={`sms:${b.customer_phone}`} className="inline-flex items-center gap-1 text-xs font-semibold bg-blue-100 hover:bg-blue-200 text-blue-700 px-2.5 py-1.5 rounded-full transition-colors">
+                      💬 SMS
+                    </a>
+                    {b.status === 'approved' && (
+                      <>
+                        <button
+                          onClick={() => handleMarkPaid(b.id, !b.paid)}
+                          className={`ml-auto inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors ${
+                            b.paid
+                              ? 'bg-blue-600 text-white hover:bg-blue-700'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          <BadgeCheck size={14} />
+                          {b.paid ? 'Paid' : 'Mark Paid'}
+                        </button>
+                        <button
+                          onClick={() => setCancelId(b.id)}
+                          className="text-xs text-red-500 hover:text-red-700 font-medium"
+                        >
+                          Cancel
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
+              );
+            })}
           </div>
         )}
 
