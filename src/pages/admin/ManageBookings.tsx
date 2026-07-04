@@ -45,7 +45,9 @@ function statusBadge(status: Booking['status']) {
 function formatBookingTime(b: BookingWithTool) {
   const start = parseISO(b.start_time);
   const end = parseISO(b.end_time);
-  if (b.hire_type === '1day') return 'Full day';
+  if (b.hire_type === '1day' || b.hire_type === '2day') {
+    return `${format(start, 'HH:mm')} – ${format(end, 'HH:mm')}`;
+  }
   return `${format(start, 'HH:mm')}–${format(end, 'HH:mm')}`;
 }
 
