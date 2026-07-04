@@ -64,12 +64,9 @@ function formatDateTime(startIso: string, endIso: string, hireType: '4hr' | '1da
   const end = parseISO(endIso);
   const dateStr = format(start, 'EEEE d MMMM yyyy');
   if (hireType === '2day') {
-    return `${dateStr} – ${format(end, 'EEEE d MMMM yyyy')} (2 days)`;
+    return `${dateStr} – ${format(end, 'EEEE d MMMM yyyy')} (2 days), collect from ${format(start, 'HH:mm')}`;
   }
-  const timeStr =
-    hireType === '1day'
-      ? 'Full day'
-      : `${format(start, 'HH:mm')} – ${format(end, 'HH:mm')}`;
+  const timeStr = `${format(start, 'HH:mm')} – ${format(end, 'HH:mm')}`;
   return `${dateStr}, ${timeStr}`;
 }
 
