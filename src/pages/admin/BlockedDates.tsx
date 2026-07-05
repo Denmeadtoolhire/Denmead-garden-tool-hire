@@ -28,11 +28,9 @@ const BlockedDates = () => {
 
   const [form, setForm] = useState({
     reason: '',
-    date: '',
-    type: 'fullday' as 'fullday' | 'custom',
-    startTime: '',
-    endTime: '',
+    startDate: '',
     endDate: '',
+    type: 'single' as 'single' | 'range',
   });
 
   const loadData = async () => {
@@ -62,32 +60,30 @@ const BlockedDates = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.date) return;
+    if (!form.startDate) return;
+    if (form.type === 'range' && !form.endDate) {
+      setError('Please select an end date');
+      return;
+    }
+    if (!settings) {
+      setError('Settings not loaded');
+      return;
+    }
     setSubmitting(true);
     setError(null);
 
-    let startTime: string;
-    let endTime: string;
+    const startDate = new Date(form.startDate);
+    const endDate = form.type === 'range' ? new Date(form.endDate) : startDate;
 
-    if (form.type === 'fullday') {
-      if (!settings) {
-        setError('Settings not loaded');
-        setSubmitting(false);
-        return;
-      }
-      const blockDate = new Date(form.date);
-      startTime = `${form.date}T${getDayOpeningTime(settings, blockDate)}:00`;
-      endTime = `${form.date}T${getDayClosingTime(settings, blockDate)}:00`;
-    } else {
-      if (!form.startTime || !form.endTime) {
-        setError('Please provide start and end times');
-        setSubmitting(false);
-        return;
-      }
-      const endDate = form.endDate || form.date;
-      startTime = `${form.date}T${form.startTime}:00`;
-      endTime = `${endDate}T${form.endTime}:00`;
+    if (endDate < startDate) {
+      setError('End date must be after start date');
+      setSubmitting(false);
+      return;
     }
+
+    const startTime = `${form.startDate}T${getDayOpeningTime(settings, startDate)}:00`;
+    const endDateStr = form.type === 'range' ? form.endDate : form.startDate;
+    const endTime = `${endDateStr}T${getDayClosingTime(settings, endDate)}:00`;
 
     const { error: insertError } = await supabase.from('blocked_periods').insert({
       start_time: startTime,
@@ -98,20 +94,26 @@ const BlockedDates = () => {
     if (insertError) {
       setError(insertError.message);
     } else {
-      setForm({ reason: '', date: '', type: 'fullday', startTime: '', endTime: '', endDate: '' });
+      setForm({ reason: '', startDate: '', endDate: '', type: 'single' });
       await loadData();
     }
     setSubmitting(false);
   };
 
-  const formatDateTime = (iso: string) => {
-    return new Date(iso).toLocaleString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  const isMultiDay = (period: BlockedPeriod) => {
+    const start = new Date(period.start_time);
+    const end = new Date(period.end_time);
+    return start.toDateString() !== end.toDateString();
+  };
+
+  const formatPeriodLabel = (period: BlockedPeriod) => {
+    if (isMultiDay(period)) {
+      return `${formatDate(period.start_time)} – ${formatDate(period.end_time)}`;
+    }
+    return formatDate(period.start_time);
   };
 
   return (
@@ -137,73 +139,67 @@ const BlockedDates = () => {
               />
             </div>
 
+            {/* Type toggle */}
+            <div className="flex gap-2">
+              {(['single', 'range'] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setForm({ ...form, type: t, endDate: '' })}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold border transition-colors ${
+                    form.type === t
+                      ? 'bg-brand-green text-white border-brand-green'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-brand-green'
+                  }`}
+                >
+                  {t === 'single' ? 'Single Day' : 'Date Range'}
+                </button>
+              ))}
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Date *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  {form.type === 'range' ? 'Start Date *' : 'Date *'}
+                </label>
                 <input
                   type="date"
-                  value={form.date}
-                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  value={form.startDate}
+                  onChange={(e) => setForm({ ...form, startDate: e.target.value })}
                   required
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Type *</label>
-                <select
-                  value={form.type}
-                  onChange={(e) => setForm({ ...form, type: e.target.value as 'fullday' | 'custom' })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
-                >
-                  <option value="fullday">Full Day</option>
-                  <option value="custom">Custom Time Range</option>
-                </select>
-              </div>
-            </div>
-
-            {form.type === 'custom' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {form.type === 'range' && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Start Time *</label>
-                  <input
-                    type="time"
-                    value={form.startTime}
-                    onChange={(e) => setForm({ ...form, startTime: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">End Date (if different)</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">End Date *</label>
                   <input
                     type="date"
                     value={form.endDate}
+                    min={form.startDate}
                     onChange={(e) => setForm({ ...form, endDate: e.target.value })}
+                    required
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">End Time *</label>
-                  <input
-                    type="time"
-                    value={form.endTime}
-                    onChange={(e) => setForm({ ...form, endTime: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-green focus:border-transparent"
-                  />
-                </div>
-              </div>
+              )}
+            </div>
+
+            {form.type === 'range' && form.startDate && form.endDate && (
+              <p className="text-sm text-gray-500 bg-gray-50 rounded-lg px-4 py-2">
+                This will block all bookings from <strong>{form.startDate}</strong> through to <strong>{form.endDate}</strong> inclusive.
+              </p>
             )}
 
-            {error && (
-              <p className="text-red-600 text-sm">{error}</p>
-            )}
+            {error && <p className="text-red-600 text-sm">{error}</p>}
 
             <button
               type="submit"
               disabled={submitting}
               className="bg-brand-green text-white font-bold py-2 px-6 rounded-xl hover:bg-brand-green-dark disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
             >
-              {submitting ? 'Saving...' : 'Add Blocked Period'}
+              {submitting ? 'Saving...' : 'Block Dates'}
             </button>
           </form>
         </div>
@@ -222,18 +218,21 @@ const BlockedDates = () => {
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
                   <tr>
+                    <th className="text-left px-6 py-3">Dates</th>
                     <th className="text-left px-6 py-3">Reason</th>
-                    <th className="text-left px-6 py-3">Start</th>
-                    <th className="text-left px-6 py-3">End</th>
                     <th className="px-6 py-3"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {blockedPeriods.map((period) => (
                     <tr key={period.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-gray-900">{period.reason || <span className="text-gray-400 italic">No reason</span>}</td>
-                      <td className="px-6 py-4 text-gray-700">{formatDateTime(period.start_time)}</td>
-                      <td className="px-6 py-4 text-gray-700">{formatDateTime(period.end_time)}</td>
+                      <td className="px-6 py-4">
+                        <p className="font-medium text-gray-900">{formatPeriodLabel(period)}</p>
+                        {isMultiDay(period) && (
+                          <span className="text-xs text-gray-400">Date range</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-gray-600">{period.reason || <span className="text-gray-400 italic">No reason</span>}</td>
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={() => handleDelete(period.id)}
