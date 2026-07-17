@@ -100,10 +100,11 @@ const CheckoutPage = () => {
               ? getDayClosingTime(settings, day2!)
               : getDayClosingTime(settings, date);
             const openDate = setTimeOnDate(date, openTime);
+            const closeDate = setTimeOnDate(hireType === '2day' ? day2! : date, closeTime);
             const label = hireType === '2day'
               ? `2 days from ${openTime}`
               : `Full day (${openTime} – ${closeTime})`;
-            setAvailableSlots([{ start: openDate, end: date, label, available: true }]);
+            setAvailableSlots([{ start: openDate, end: closeDate, label, available: true }]);
           } else {
             setAvailableSlots([]);
           }
@@ -141,6 +142,16 @@ const CheckoutPage = () => {
 
   const handleSubmit = async () => {
     if (!hireType || !selectedDate || !selectedTime || !settings) return;
+
+    if (hireType === '2day') {
+      const missingPrice = cartState.items.find(
+        (item) => !item.tool.price_2day || item.tool.price_2day <= 0
+      );
+      if (missingPrice) {
+        alert(`2-day hire is not currently available for "${missingPrice.tool.name}". Please contact us or choose a different hire period.`);
+        return;
+      }
+    }
 
     try {
       setIsSubmitting(true);
@@ -525,7 +536,7 @@ const CheckoutPage = () => {
                   </span>
                   <span>
                     £{(
-                      (hireType === '4hr' ? item.tool.price_4hr : item.tool.price_1day) *
+                      (hireType === '4hr' ? item.tool.price_4hr : hireType === '2day' ? item.tool.price_2day : item.tool.price_1day) *
                       item.quantity
                     ).toFixed(2)}
                   </span>
