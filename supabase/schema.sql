@@ -64,7 +64,7 @@ create table bookings (
   customer_name text not null,
   customer_email text not null,
   customer_phone text not null,
-  hire_type text not null check (hire_type in ('4hr', '1day')),
+  hire_type text not null check (hire_type in ('4hr', '1day', '2day')),
   start_time timestamptz not null,
   end_time timestamptz not null,
   status text default 'confirmed' check (status in ('confirmed', 'cancelled')),
