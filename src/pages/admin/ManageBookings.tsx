@@ -4,7 +4,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/lib/supabase';
 import type { Booking, BookingItem } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
-import { CheckCircle, Clock, AlertTriangle, X, Phone, MessageCircle, BadgeCheck } from 'lucide-react';
+import { CheckCircle, Clock, AlertTriangle, X, Phone, MessageCircle, BadgeCheck, CalendarPlus } from 'lucide-react';
 import { sendApprovalEmail, sendAlternativeSuggestionEmail, sendHireCompleteEmail } from '@/lib/email';
 
 type BookingWithDetails = Booking & {
@@ -63,6 +63,19 @@ function getToolNames(b: BookingWithDetails): string {
     return b.booking_items.map(bi => bi.tools?.name || 'Unknown').join(', ');
   }
   return b.tools?.name ?? '—';
+}
+
+function buildGoogleCalendarUrl(b: BookingWithDetails, toolNames: string): string {
+  const fmt = (iso: string) => iso.replace(/-/g, '').replace(/:/g, '').replace(/\.\d+/, '');
+  const start = fmt(b.start_time);
+  const end = fmt(b.end_time);
+  const hireLabel = b.hire_type === '4hr' ? '4-Hour Hire' : b.hire_type === '2day' ? '2-Day Hire' : 'Full Day Hire';
+  const title = encodeURIComponent(`Tool Hire – ${b.customer_name} (${toolNames})`);
+  const details = encodeURIComponent(
+    `${hireLabel}\nCustomer: ${b.customer_name}\nPhone: ${b.customer_phone}\nEmail: ${b.customer_email}${b.customer_address ? `\nAddress: ${b.customer_address}` : ''}${b.notes ? `\nNotes: ${b.notes}` : ''}`
+  );
+  const location = encodeURIComponent('1 Inhams Lane, Denmead, PO7 6LX');
+  return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}&location=${location}`;
 }
 
 function getBookingTotal(b: BookingWithDetails): number {
@@ -560,6 +573,14 @@ const ManageBookings = () => {
                       <a href={`sms:${b.customer_phone}`} className="inline-flex items-center gap-1 text-xs font-semibold bg-blue-100 hover:bg-blue-200 text-blue-700 px-2.5 py-1 rounded-full transition-colors">
                         💬 SMS
                       </a>
+                      <a
+                        href={buildGoogleCalendarUrl(b, getToolNames(b))}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1 rounded-full transition-colors"
+                      >
+                        <CalendarPlus size={11} /> Add to Calendar
+                      </a>
                     </div>
                     <p className="text-sm font-medium text-gray-800 mt-1">
                       {getToolNames(b)} &bull; {b.hire_type === '4hr' ? '4 Hours' : b.hire_type === '2day' ? '2 Days' : 'Full Day'}
@@ -701,6 +722,14 @@ const ManageBookings = () => {
                     </a>
                     <a href={`sms:${b.customer_phone}`} className="inline-flex items-center gap-1 text-xs font-semibold bg-blue-100 hover:bg-blue-200 text-blue-700 px-2.5 py-1.5 rounded-full transition-colors">
                       💬 SMS
+                    </a>
+                    <a
+                      href={buildGoogleCalendarUrl(b, getToolNames(b))}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-600 px-2.5 py-1.5 rounded-full transition-colors"
+                    >
+                      <CalendarPlus size={11} /> Add to Calendar
                     </a>
                     {b.status === 'approved' && (
                       <>
