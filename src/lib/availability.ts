@@ -222,6 +222,88 @@ export async function getAvailableSlotsForMultiTools(
   });
 }
 
+export async function getFullDaySlotsForMultiTools(
+  toolIds: string[],
+  date: Date,
+  settings: Settings,
+  durationDays: 1 | 2
+): Promise<Array<{ start: Date; end: Date; label: string; available: boolean }>> {
+  if (toolIds.length === 0) return [];
+
+  const openTime = getDayOpeningTime(settings, date);
+  const closeTime = getDayClosingTime(settings, date);
+  const { hours: openH, minutes: openM } = parseTime(openTime);
+  const { hours: closeH, minutes: closeM } = parseTime(closeTime);
+
+  const minStart = addHours(new Date(), settings.min_notice_hours ?? 0);
+  const periodEnd = addDays(date, durationDays);
+
+  // Fetch bookings and blocked periods for the entire window once
+  const [toolResults, blockedResult, legacyResult, itemResult] = await Promise.all([
+    Promise.all(toolIds.map(id => supabase.from('tools').select('quantity').eq('id', id).single())),
+    supabase
+      .from('blocked_periods')
+      .select('start_time, end_time')
+      .lt('start_time', periodEnd.toISOString())
+      .gt('end_time', date.toISOString()),
+    Promise.all(toolIds.map(id =>
+      supabase
+        .from('bookings')
+        .select('start_time, end_time')
+        .eq('tool_id', id)
+        .in('status', ['approved', 'pending'])
+        .lt('start_time', periodEnd.toISOString())
+        .gt('end_time', date.toISOString())
+    )),
+    Promise.all(toolIds.map(id =>
+      supabase
+        .from('bookings')
+        .select('start_time, end_time, booking_items!inner(tool_id)')
+        .eq('booking_items.tool_id', id)
+        .in('status', ['approved', 'pending'])
+        .lt('start_time', periodEnd.toISOString())
+        .gt('end_time', date.toISOString())
+    )),
+  ]);
+
+  const quantities = toolResults.map(r => r.data?.quantity ?? 1);
+  const blockedPeriods = blockedResult.data ?? [];
+  const turnaround = settings.turnaround_minutes ?? 30;
+
+  const slots: Array<{ start: Date; end: Date; label: string; available: boolean }> = [];
+  let h = openH, m = openM;
+  while (h < closeH || (h === closeH && m < closeM)) {
+    const slotStart = setTimeOnDate(date, `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+    const slotEnd = addDays(slotStart, durationDays);
+    const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+
+    let available = slotStart >= minStart;
+
+    if (available) {
+      const isBlocked = blockedPeriods.some(bp =>
+        isBefore(parseISO(bp.start_time), slotEnd) && isAfter(parseISO(bp.end_time), slotStart)
+      );
+      if (isBlocked) available = false;
+    }
+
+    if (available) {
+      for (let i = 0; i < toolIds.length; i++) {
+        const bookings = [...(legacyResult[i].data ?? []), ...(itemResult[i].data ?? [])];
+        const bookedCount = bookings.filter(b => {
+          const bStart = parseISO(b.start_time);
+          const bEnd = addMinutes(parseISO(b.end_time), turnaround);
+          return isBefore(bStart, slotEnd) && isAfter(bEnd, slotStart);
+        }).length;
+        if (bookedCount >= quantities[i]) { available = false; break; }
+      }
+    }
+
+    slots.push({ start: slotStart, end: slotEnd, label, available });
+    h++;
+  }
+  return slots;
+}
+
 export async function isFullDayAvailableForMultiTools(
   toolIds: string[],
   date: Date,

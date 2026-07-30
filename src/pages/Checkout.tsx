@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase, type Booking, type Settings } from '@/lib/supabase';
+import { supabase, type Booking } from '@/lib/supabase';
 import { useCart } from '@/contexts/CartContext';
-import { getAvailableSlotsForMultiTools, isFullDayAvailableForMultiTools, getDayOpeningTime, getDayClosingTime, setTimeOnDate, parseTime } from '@/lib/availability';
+import { getAvailableSlotsForMultiTools, getFullDaySlotsForMultiTools } from '@/lib/availability';
 import { sendRequestReceivedEmail, sendAdminNewRequestEmail } from '@/lib/email';
 import { format, parseISO } from 'date-fns';
 import { ChevronLeft, AlertCircle, X } from 'lucide-react';
@@ -89,35 +89,8 @@ const CheckoutPage = () => {
         const toolIds = cartState.items.map((item) => item.tool.id);
 
         if (hireType === '1day' || hireType === '2day') {
-          const day2 = hireType === '2day' ? new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1) : null;
-          const available = hireType === '2day'
-            ? (await isFullDayAvailableForMultiTools(toolIds, date, settings)) &&
-              (await isFullDayAvailableForMultiTools(toolIds, day2!, settings))
-            : await isFullDayAvailableForMultiTools(toolIds, date, settings);
-          if (available) {
-            const openTime = getDayOpeningTime(settings, date);
-            const closeTime = hireType === '2day'
-              ? getDayClosingTime(settings, day2!)
-              : getDayClosingTime(settings, date);
-            const closeDate = setTimeOnDate(hireType === '2day' ? day2! : date, closeTime);
-            const { hours: closeH, minutes: closeM } = parseTime(closeTime);
-            const minStart = new Date();
-            minStart.setMinutes(minStart.getMinutes() + (settings.min_notice_hours ?? 0) * 60);
-
-            // Generate hourly collection slots from opening time up to (but not including) closing time
-            const slots: Array<{ start: Date; end: Date; label: string; available: boolean }> = [];
-            const { hours: openH, minutes: openM } = parseTime(openTime);
-            let h = openH, m = openM;
-            while (h < closeH || (h === closeH && m < closeM)) {
-              const slotStart = setTimeOnDate(date, `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-              const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-              slots.push({ start: slotStart, end: closeDate, label, available: slotStart >= minStart });
-              h++;
-            }
-            setAvailableSlots(slots);
-          } else {
-            setAvailableSlots([]);
-          }
+          const slots = await getFullDaySlotsForMultiTools(toolIds, date, settings, hireType === '2day' ? 2 : 1);
+          setAvailableSlots(slots);
         } else {
           const slots = await getAvailableSlotsForMultiTools(toolIds, date, settings);
           setAvailableSlots(slots);
@@ -175,13 +148,9 @@ const CheckoutPage = () => {
       if (hireType === '4hr') {
         endTime.setHours(endTime.getHours() + 4);
       } else if (hireType === '2day') {
-        const day2 = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate() + 1);
-        const [ch, cm] = getDayClosingTime(settings, day2).split(':').map(Number);
-        endTime = new Date(day2);
-        endTime.setHours(ch, cm, 0, 0);
+        endTime.setDate(endTime.getDate() + 2);
       } else {
-        const [ch, cm] = getDayClosingTime(settings, startTime).split(':').map(Number);
-        endTime.setHours(ch, cm, 0, 0);
+        endTime.setDate(endTime.getDate() + 1);
       }
 
       // Get or create customer
