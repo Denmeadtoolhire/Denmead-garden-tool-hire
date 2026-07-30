@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase, type Booking, type Settings } from '@/lib/supabase';
 import { useCart } from '@/contexts/CartContext';
-import { getAvailableSlotsForMultiTools, isFullDayAvailableForMultiTools, getDayOpeningTime, getDayClosingTime, setTimeOnDate } from '@/lib/availability';
+import { getAvailableSlotsForMultiTools, isFullDayAvailableForMultiTools, getDayOpeningTime, getDayClosingTime, setTimeOnDate, parseTime } from '@/lib/availability';
 import { sendRequestReceivedEmail, sendAdminNewRequestEmail } from '@/lib/email';
 import { format, parseISO } from 'date-fns';
 import { ChevronLeft, AlertCircle, X } from 'lucide-react';
@@ -99,12 +99,22 @@ const CheckoutPage = () => {
             const closeTime = hireType === '2day'
               ? getDayClosingTime(settings, day2!)
               : getDayClosingTime(settings, date);
-            const openDate = setTimeOnDate(date, openTime);
             const closeDate = setTimeOnDate(hireType === '2day' ? day2! : date, closeTime);
-            const label = hireType === '2day'
-              ? `2 days from ${openTime}`
-              : `Full day (${openTime} – ${closeTime})`;
-            setAvailableSlots([{ start: openDate, end: closeDate, label, available: true }]);
+            const { hours: closeH, minutes: closeM } = parseTime(closeTime);
+            const minStart = new Date();
+            minStart.setMinutes(minStart.getMinutes() + (settings.min_notice_hours ?? 0) * 60);
+
+            // Generate hourly collection slots from opening time up to (but not including) closing time
+            const slots: Array<{ start: Date; end: Date; label: string; available: boolean }> = [];
+            const { hours: openH, minutes: openM } = parseTime(openTime);
+            let h = openH, m = openM;
+            while (h < closeH || (h === closeH && m < closeM)) {
+              const slotStart = setTimeOnDate(date, `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+              const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+              slots.push({ start: slotStart, end: closeDate, label, available: slotStart >= minStart });
+              h++;
+            }
+            setAvailableSlots(slots);
           } else {
             setAvailableSlots([]);
           }
@@ -388,7 +398,7 @@ const CheckoutPage = () => {
                               : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                           }`}
                         >
-                          {hireType === '1day' ? 'Full Day' : slot.label.split(' ')[0]}
+                          {slot.label.split(' ')[0]}
                         </button>
                       ))}
                     </div>
