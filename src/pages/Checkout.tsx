@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase, type Booking } from '@/lib/supabase';
+import { supabase, type Booking, type Settings } from '@/lib/supabase';
 import { useCart } from '@/contexts/CartContext';
 import { getAvailableSlotsForMultiTools, getFullDaySlotsForMultiTools } from '@/lib/availability';
 import { sendRequestReceivedEmail, sendAdminNewRequestEmail } from '@/lib/email';
