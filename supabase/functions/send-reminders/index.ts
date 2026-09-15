@@ -46,9 +46,15 @@ serve(async () => {
       const formatDate = (d: Date) =>
         d.toLocaleString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
 
-      const timeStr = booking.hire_type === '1day'
-        ? 'Full day'
-        : `${formatTime(startDate)} – ${formatTime(endDate)}`;
+      const timeStr = booking.hire_type === '4hr'
+        ? `${formatTime(startDate)} – ${formatTime(endDate)}`
+        : `Collect ${formatTime(startDate)}, return by ${formatTime(endDate)} on ${formatDate(endDate)}`;
+
+      const hireLabel = booking.hire_type === '4hr'
+        ? '4 Hours'
+        : booking.hire_type === '2day'
+          ? '2 Days'
+          : 'Full Day (24 hours)';
 
       const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -67,7 +73,7 @@ serve(async () => {
                 <tr><td style="padding: 8px 0; color: #666; width: 35%;">Reference:</td><td style="padding: 8px 0; font-weight: bold; font-family: monospace;">${booking.id.substring(0, 8).toUpperCase()}</td></tr>
                 <tr><td style="padding: 8px 0; color: #666;">Date:</td><td style="padding: 8px 0;">${formatDate(startDate)}</td></tr>
                 <tr><td style="padding: 8px 0; color: #666;">Time:</td><td style="padding: 8px 0;">${timeStr}</td></tr>
-                <tr><td style="padding: 8px 0; color: #666;">Hire type:</td><td style="padding: 8px 0;">${booking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}</td></tr>
+                <tr><td style="padding: 8px 0; color: #666;">Hire type:</td><td style="padding: 8px 0;">${hireLabel}</td></tr>
               </table>
             </div>
 
