@@ -10,6 +10,11 @@ import { format, parseISO } from 'date-fns';
 const DRIVE_IMAGE = 'https://res.cloudinary.com/da5zsuxlz/image/upload/c_fill,w_600,h_300,g_auto/v1781712224/Screenshot_20240510-133757_lg40gr.png';
 
 const ADMIN_EMAIL = 'denmeadtoolhire@gmail.com';
+
+// Admin alerts go to a second inbox too, so one mailbox delaying or filtering a
+// message doesn't mean a booking goes unnoticed. ADMIN_EMAIL stays the single
+// contact address shown to customers.
+const ADMIN_NOTIFY = [ADMIN_EMAIL, 'mikemacuk@googlemail.com'];
 const PICKUP_ADDRESS = '1 Inhams Lane, Denmead, PO7 6LX';
 const PHONE = '07889765153';
 
@@ -382,7 +387,7 @@ export async function sendAdminNewRequestEmail(booking: Booking, toolNames: stri
   `;
 
   await sendEmail({
-    to: [ADMIN_EMAIL],
+    to: ADMIN_NOTIFY,
     subject: `New Booking Request - ${subjectToolLabel} - ${booking.customer_name}`,
     html,
   });
@@ -423,7 +428,7 @@ export async function sendAdminCancellationEmail(booking: Booking, toolNames: st
   `;
 
   await sendEmail({
-    to: [ADMIN_EMAIL],
+    to: ADMIN_NOTIFY,
     subject: `Booking Cancelled - ${booking.customer_name} - ${booking.id.substring(0, 8).toUpperCase()}`,
     html,
   });
