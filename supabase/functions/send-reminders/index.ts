@@ -57,6 +57,7 @@ serve(async () => {
           : 'Full Day (24 hours)';
 
       const html = `
+        <meta charset="utf-8">
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background-color: #1a6b2f; padding: 24px; text-align: center;">
             <h1 style="color: #f5c518; margin: 0; font-size: 22px;">Denmead Tool &amp; Garden Hire</h1>
@@ -101,12 +102,12 @@ serve(async () => {
         method: 'POST',
         headers: {
           'api-key': BREVO_API_KEY,
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8',
         },
         body: JSON.stringify({
           sender: { name: 'Denmead Tool Hire', email: 'bookings@denmeadtoolhire.co.uk' },
           to: [{ email: booking.customer_email, name: booking.customer_name }],
-          subject: `Reminder: Your tool hire is tomorrow — ${formatDate(startDate)}`,
+          subject: `Reminder: Your tool hire is tomorrow - ${formatDate(startDate)}`,
           htmlContent: html,
         }),
       });

@@ -77,6 +77,7 @@ function formatDateTime(startIso: string, endIso: string, hireType: '4hr' | '1da
 
 function baseHeader(title: string): string {
   return `
+    <meta charset="utf-8">
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="background-color: #1a6b2f; padding: 24px; text-align: center;">
         <h1 style="color: #f5c518; margin: 0; font-size: 22px;">Denmead Tool &amp; Garden Hire</h1>
