@@ -10,7 +10,7 @@ const DRIVE_IMAGE = 'https://res.cloudinary.com/da5zsuxlz/image/upload/c_fill,w_
 serve(async () => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  // Find bookings starting tomorrow — run at 6pm each evening
+  // Find bookings starting tomorrow - run at 6pm each evening
   const now = new Date();
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -47,7 +47,7 @@ serve(async () => {
         d.toLocaleString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
 
       const timeStr = booking.hire_type === '4hr'
-        ? `${formatTime(startDate)} – ${formatTime(endDate)}`
+        ? `${formatTime(startDate)} &ndash; ${formatTime(endDate)}`
         : `Collect ${formatTime(startDate)}, return by ${formatTime(endDate)} on ${formatDate(endDate)}`;
 
       const hireLabel = booking.hire_type === '4hr'
@@ -64,7 +64,7 @@ serve(async () => {
             <p style="color: #ccffcc; margin: 6px 0 0; font-size: 14px;">Your Community Tool Rental Experts</p>
           </div>
           <div style="padding: 30px; background: #f9f9f9;">
-            <h2 style="color: #1a6b2f; margin-top: 0;">📅 Reminder: Your hire is tomorrow!</h2>
+            <h2 style="color: #1a6b2f; margin-top: 0;">&#128197; Reminder: Your hire is tomorrow!</h2>
             <p>Hi ${booking.customer_name},</p>
             <p>This is a friendly reminder that your tool hire is scheduled for <strong>tomorrow</strong>.</p>
 
@@ -79,14 +79,14 @@ serve(async () => {
             </div>
 
             <div style="background: #fff3cd; border: 1px solid #f5c518; border-radius: 8px; padding: 15px; margin: 20px 0;">
-              <strong>📍 Collection address:</strong><br>
+              <strong>&#128205; Collection address:</strong><br>
               <a href="https://www.google.com/maps/search/1+Inhams+Lane+Denmead+PO7+6LX" style="color: #1a6b2f; font-weight: bold; text-decoration: none;">
                 1 Inhams Lane, Denmead, PO7 6LX
               </a>
               <p style="margin: 10px 0 0; font-size: 14px; color: #555;">We operate from our home address, please click on the map link. We are the corner house, big wooden gates.</p>
             </div>
 
-            <img src="${DRIVE_IMAGE}" alt="Our collection point — corner house with big wooden gates" style="width: 100%; border-radius: 8px; margin: 0 0 20px; display: block;" />
+            <img src="${DRIVE_IMAGE}" alt="Our collection point &mdash; corner house with big wooden gates" style="width: 100%; border-radius: 8px; margin: 0 0 20px; display: block;" />
 
             <p><strong>Payment:</strong> Cash or card accepted on collection.</p>
             <p style="color: #666; font-size: 13px;">Questions? Text us on <strong>07889765153</strong> and we'll get back to you asap.</p>
