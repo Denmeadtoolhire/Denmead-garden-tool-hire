@@ -291,7 +291,7 @@ const HomePage = () => {
           <div className="flex flex-col sm:flex-row gap-6 justify-center text-green-100 text-sm">
             <div className="flex items-center gap-2 justify-center">
               <MapPin size={16} className="text-brand-gold" />
-              1 Inhams Lane, Denmead, PO7 6LX
+              Inhams Lane, Denmead, PO7 6LX
             </div>
             <div className="flex items-center gap-2 justify-center">
               <Phone size={16} className="text-brand-gold" />

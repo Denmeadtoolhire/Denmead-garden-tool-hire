@@ -33,7 +33,7 @@ const Footer = () => {
             <div className="space-y-3 text-sm text-slate-300">
               <div className="flex items-start gap-2.5">
                 <MapPin size={15} className="mt-0.5 shrink-0 text-brand-gold" />
-                <span>1 Inhams Lane, Denmead, PO7 6LX</span>
+                <span>Inhams Lane, Denmead, PO7 6LX</span>
               </div>
               <div className="flex items-center gap-2.5">
                 <Phone size={15} className="text-brand-gold shrink-0" />

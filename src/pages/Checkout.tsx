@@ -39,7 +39,7 @@ const TERMS_AND_CONDITIONS = `Denmead Tool and Garden Hire Ltd - Terms and Condi
 
 15. Customer Acknowledgment: By accepting this agreement, the Renter acknowledges that they have read, understood, and agreed to abide by these terms and conditions.
 
-Denmead Tool and Garden Hire Ltd, 1 Inhams Lane, Denmead, PO7 6LX. Tel: 07889765153`;
+Denmead Tool and Garden Hire Ltd, Inhams Lane, Denmead, PO7 6LX. Tel: 07889765153`;
 
 const CheckoutPage = () => {
   const navigate = useNavigate();

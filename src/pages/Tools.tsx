@@ -122,7 +122,7 @@ const ToolsPage = () => {
           </p>
           <div className="mt-4 inline-flex items-center gap-2 bg-white/15 text-white text-sm font-medium px-4 py-2 rounded-full">
             <MapPin size={15} />
-            Collection only — 1 Inhams Lane, Denmead, PO7 6LX
+            Collection only — Inhams Lane, Denmead, PO7 6LX
           </div>
         </div>
       </div>
