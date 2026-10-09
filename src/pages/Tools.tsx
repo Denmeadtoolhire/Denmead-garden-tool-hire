@@ -22,6 +22,14 @@ const startOfDay = (d: Date) => {
 const coversDay = (period: BlockedPeriod, day: Date) =>
   startOfDay(new Date(period.start_time)) <= day && startOfDay(new Date(period.end_time)) >= day;
 
+const ordinal = (n: number) => {
+  if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`;
+  return `${n}${['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
+};
+
+const formatReopenDate = (d: Date) =>
+  `${d.toLocaleDateString('en-GB', { weekday: 'long' })} ${ordinal(d.getDate())} ${d.toLocaleDateString('en-GB', { month: 'long' })}`;
+
 // Walk forward past weekly closed days and any back-to-back blocked periods, so
 // the banner never points customers at a day that is also unavailable.
 const findNextOpenDay = (from: Date, blocks: BlockedPeriod[], openDays: number[]): Date | null => {
@@ -137,15 +145,8 @@ const ToolsPage = () => {
               <p className="mt-1 text-sm text-amber-800">
                 {closure.reopens ? (
                   <>
-                    You can still book ahead — our next available collection day is{' '}
-                    <strong>
-                      {closure.reopens.toLocaleDateString('en-GB', {
-                        weekday: 'long',
-                        day: 'numeric',
-                        month: 'long',
-                      })}
-                    </strong>
-                    .
+                    You can still book ahead — we are back open on{' '}
+                    <strong>{formatReopenDate(closure.reopens)}</strong>.
                   </>
                 ) : (
                   <>Please check back soon, or call us on 07889765153.</>
