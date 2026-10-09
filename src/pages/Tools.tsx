@@ -11,7 +11,6 @@ type BlockedPeriod = {
   id: string;
   start_time: string;
   end_time: string;
-  reason: string | null;
 };
 
 const startOfDay = (d: Date) => {
@@ -43,7 +42,7 @@ const ToolsPage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState<string>('');
-  const [closure, setClosure] = useState<{ reason: string | null; reopens: Date | null } | null>(null);
+  const [closure, setClosure] = useState<{ reopens: Date | null } | null>(null);
 
   // Define category order
   const categoryOrder = ['DIY', 'Garden', 'Home Tools'];
@@ -77,7 +76,6 @@ const ToolsPage = () => {
     setClosure(
       todayBlock
         ? {
-            reason: todayBlock.reason,
             reopens: loadedSettings
               ? findNextOpenDay(today, blocks, loadedSettings.open_days)
               : null,
@@ -135,9 +133,7 @@ const ToolsPage = () => {
           <div className="mb-8 flex gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:p-5">
             <CalendarOff size={20} className="mt-0.5 shrink-0 text-amber-600" />
             <div>
-              <p className="font-bold text-amber-900">
-                We're closed today{closure.reason ? ` — ${closure.reason}` : ''}
-              </p>
+              <p className="font-bold text-amber-900">Apologies, but we are closed today</p>
               <p className="mt-1 text-sm text-amber-800">
                 {closure.reopens ? (
                   <>
