@@ -3,9 +3,38 @@ import { supabase } from '@/lib/supabase';
 import type { Tool, Category, Settings } from '@/lib/supabase';
 import ToolCard from '@/components/ToolCard';
 import FloatingCartButton from '@/components/FloatingCartButton';
-import { Search, SlidersHorizontal, Package, MapPin } from 'lucide-react';
+import { Search, SlidersHorizontal, Package, MapPin, CalendarOff } from 'lucide-react';
 
 type ToolWithCategory = Tool & { categories: Category | null };
+
+type BlockedPeriod = {
+  id: string;
+  start_time: string;
+  end_time: string;
+  reason: string | null;
+};
+
+const startOfDay = (d: Date) => {
+  const copy = new Date(d);
+  copy.setHours(0, 0, 0, 0);
+  return copy;
+};
+
+const coversDay = (period: BlockedPeriod, day: Date) =>
+  startOfDay(new Date(period.start_time)) <= day && startOfDay(new Date(period.end_time)) >= day;
+
+// Walk forward past weekly closed days and any back-to-back blocked periods, so
+// the banner never points customers at a day that is also unavailable.
+const findNextOpenDay = (from: Date, blocks: BlockedPeriod[], openDays: number[]): Date | null => {
+  const day = startOfDay(from);
+  for (let i = 0; i < 60; i++) {
+    day.setDate(day.getDate() + 1);
+    if (!openDays.includes(day.getDay())) continue;
+    if (blocks.some((b) => coversDay(b, day))) continue;
+    return new Date(day);
+  }
+  return null;
+};
 
 const ToolsPage = () => {
   const [tools, setTools] = useState<ToolWithCategory[]>([]);
@@ -14,6 +43,7 @@ const ToolsPage = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCat, setSelectedCat] = useState<string>('');
+  const [closure, setClosure] = useState<{ reason: string | null; reopens: Date | null } | null>(null);
 
   // Define category order
   const categoryOrder = ['DIY', 'Garden', 'Home Tools'];
@@ -23,15 +53,38 @@ const ToolsPage = () => {
   }, []);
 
   const loadData = async () => {
-    const [toolsRes, catsRes, settingsRes] = await Promise.all([
+    const today = startOfDay(new Date());
+
+    const [toolsRes, catsRes, settingsRes, blocksRes] = await Promise.all([
       supabase.from('tools').select('*, categories(*)').eq('is_available', true).order('name'),
       supabase.from('categories').select('*').order('sort_order'),
       supabase.from('settings').select('*').eq('id', 1).single(),
+      supabase
+        .from('blocked_periods')
+        .select('*')
+        .gte('end_time', today.toISOString())
+        .order('start_time'),
     ]);
 
     setTools((toolsRes.data as ToolWithCategory[]) ?? []);
     setCategories(catsRes.data ?? []);
-    if (settingsRes.data) setSettings(settingsRes.data as Settings);
+
+    const loadedSettings = settingsRes.data as Settings | null;
+    if (loadedSettings) setSettings(loadedSettings);
+
+    const blocks = (blocksRes.data as BlockedPeriod[]) ?? [];
+    const todayBlock = blocks.find((b) => coversDay(b, today));
+    setClosure(
+      todayBlock
+        ? {
+            reason: todayBlock.reason,
+            reopens: loadedSettings
+              ? findNextOpenDay(today, blocks, loadedSettings.open_days)
+              : null,
+          }
+        : null
+    );
+
     setLoading(false);
   };
 
@@ -77,6 +130,35 @@ const ToolsPage = () => {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-10">
+        {/* Closed-today notice, so a calendar full of unavailable dates doesn't read as a broken site */}
+        {closure && (
+          <div className="mb-8 flex gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:p-5">
+            <CalendarOff size={20} className="mt-0.5 shrink-0 text-amber-600" />
+            <div>
+              <p className="font-bold text-amber-900">
+                We're closed today{closure.reason ? ` — ${closure.reason}` : ''}
+              </p>
+              <p className="mt-1 text-sm text-amber-800">
+                {closure.reopens ? (
+                  <>
+                    You can still book ahead — our next available collection day is{' '}
+                    <strong>
+                      {closure.reopens.toLocaleDateString('en-GB', {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                      })}
+                    </strong>
+                    .
+                  </>
+                ) : (
+                  <>Please check back soon, or call us on 07889765153.</>
+                )}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Search & filter card */}
         <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-4 mb-8">
           <div className="flex flex-col sm:flex-row gap-3">
