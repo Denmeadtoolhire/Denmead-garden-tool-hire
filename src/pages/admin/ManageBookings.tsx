@@ -55,6 +55,7 @@ function formatBookingTime(b: BookingWithTool) {
 const TIME_OPTIONS: string[] = [];
 for (let h = 7; h <= 20; h++) {
   TIME_OPTIONS.push(`${String(h).padStart(2, '0')}:00`);
+  if (h < 20) TIME_OPTIONS.push(`${String(h).padStart(2, '0')}:30`);
 }
 
 // Helper to get tool names for a booking (handles both single-tool and multi-tool)
