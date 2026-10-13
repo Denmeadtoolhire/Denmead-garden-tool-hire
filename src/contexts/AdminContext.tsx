@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+export type LoginResult = 'ok' | 'wrong-password' | 'unreachable';
+
 interface AdminContextType {
   isAuthenticated: boolean;
-  login: (password: string) => Promise<boolean>;
+  login: (password: string) => Promise<LoginResult>;
   logout: () => void;
 }
 
@@ -13,32 +15,32 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     return sessionStorage.getItem('admin_auth') === 'true';
   });
 
-  const login = async (password: string): Promise<boolean> => {
+  const login = async (password: string): Promise<LoginResult> => {
     // Import bcryptjs dynamically to avoid SSR issues
     const bcrypt = await import('bcryptjs');
 
     // Fetch the hash from settings
     const { supabase } = await import('@/lib/supabase');
-    const { data: settings } = await supabase
+    const { data: settings, error } = await supabase
       .from('settings')
       .select('admin_password_hash')
       .eq('id', 1)
       .single();
 
-    let hash = settings?.admin_password_hash;
+    // A failed lookup must never fall through to a password check: treating it
+    // as a wrong password hid outages behind a retry, and any fallback hash
+    // here would let anyone in simply by blocking this request.
+    if (error || !settings) return 'unreachable';
 
-    // If no hash set, use default "admin123"
-    if (!hash) {
-      // default password hash for "admin123"
-      hash = '$2a$10$kHfypn3LdE4QGV1HE9jPyOeT.Cq/bRc2YnpRgCdyb.vZrG9FzyBxK';
-    }
+    const hash = settings.admin_password_hash;
+    if (!hash) return 'unreachable';
 
     const valid = await bcrypt.compare(password, hash);
-    if (valid) {
-      sessionStorage.setItem('admin_auth', 'true');
-      setIsAuthenticated(true);
-    }
-    return valid;
+    if (!valid) return 'wrong-password';
+
+    sessionStorage.setItem('admin_auth', 'true');
+    setIsAuthenticated(true);
+    return 'ok';
   };
 
   const logout = () => {

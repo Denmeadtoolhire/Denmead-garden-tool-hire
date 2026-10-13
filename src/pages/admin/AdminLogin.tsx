@@ -16,11 +16,13 @@ const AdminLogin = () => {
     setLoading(true);
     setError('');
 
-    const success = await login(password);
+    const result = await login(password);
     setLoading(false);
 
-    if (success) {
+    if (result === 'ok') {
       navigate('/admin/dashboard');
+    } else if (result === 'unreachable') {
+      setError("Couldn't reach the server. Check your connection and try again.");
     } else {
       setError('Incorrect password. Please try again.');
     }
@@ -75,10 +77,6 @@ const AdminLogin = () => {
               {loading ? 'Logging in...' : 'Login'}
             </button>
           </form>
-
-          <p className="text-xs text-gray-400 text-center mt-4">
-            Default password: admin123 (change in Settings after login)
-          </p>
         </div>
       </div>
     </div>
