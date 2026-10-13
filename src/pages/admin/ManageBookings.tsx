@@ -113,6 +113,7 @@ const ManageBookings = () => {
   const [altBooking, setAltBooking] = useState<BookingWithTool | null>(null);
   const [altDate, setAltDate] = useState('');
   const [altStartTime, setAltStartTime] = useState('08:00');
+  const [altNote, setAltNote] = useState('');
   const [sendingAlt, setSendingAlt] = useState(false);
   const [altError, setAltError] = useState('');
 
@@ -274,7 +275,8 @@ const ManageBookings = () => {
         suggestedStart.toISOString(),
         suggestedEnd.toISOString(),
         acceptUrl,
-        declineUrl
+        declineUrl,
+        altNote.trim()
       ).catch(console.error);
     }
 
@@ -282,6 +284,7 @@ const ManageBookings = () => {
     setAltBooking(null);
     setAltDate('');
     setAltStartTime('08:00');
+    setAltNote('');
     setSendingAlt(false);
     await loadBookings();
   };
@@ -483,7 +486,7 @@ const ManageBookings = () => {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-lg">Suggest Alternative Time</h3>
                 <button
-                  onClick={() => { setAltBooking(null); setAltError(''); }}
+                  onClick={() => { setAltBooking(null); setAltError(''); setAltNote(''); }}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <X size={20} />
@@ -517,6 +520,19 @@ const ManageBookings = () => {
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Note to customer <span className="font-normal text-gray-400">(optional)</span>
+                  </label>
+                  <textarea
+                    value={altNote}
+                    onChange={(e) => setAltNote(e.target.value)}
+                    rows={3}
+                    maxLength={500}
+                    placeholder="e.g. Sorry, the mower is already booked that morning — this is the earliest I can do."
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green resize-none"
+                  />
+                </div>
               </div>
               {altError && (
                 <p className="mt-3 text-sm text-red-600">{altError}</p>
@@ -530,7 +546,7 @@ const ManageBookings = () => {
                   {sendingAlt ? 'Sending...' : 'Send Suggestion'}
                 </button>
                 <button
-                  onClick={() => { setAltBooking(null); setAltError(''); }}
+                  onClick={() => { setAltBooking(null); setAltError(''); setAltNote(''); }}
                   className="flex-1 border border-gray-200 py-2.5 rounded-lg hover:bg-gray-50 text-sm"
                 >
                   Cancel

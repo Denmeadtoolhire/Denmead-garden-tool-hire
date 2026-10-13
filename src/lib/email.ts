@@ -64,6 +64,14 @@ function nl2br(text: string): string {
   return text.replace(/\n/g, '<br>');
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function formatDateTime(startIso: string, endIso: string, hireType: '4hr' | '1day' | '2day'): string {
   const start = parseISO(startIso);
   const end = parseISO(endIso);
@@ -290,7 +298,8 @@ export async function sendAlternativeSuggestionEmail(
   suggestedStart: string,
   suggestedEnd: string,
   acceptUrl: string,
-  declineUrl: string
+  declineUrl: string,
+  note?: string
 ): Promise<void> {
 
   const settings = await getSettings();
@@ -311,6 +320,12 @@ export async function sendAlternativeSuggestionEmail(
       <p style="font-size: 18px; font-weight: bold; color: #1a6b2f; margin: 0;">${suggestedDateTime}</p>
       <p style="color: #666; margin: 8px 0 0;">${booking.hire_type === '4hr' ? '4 Hour hire' : 'Full Day hire'} — ${toolDisplay}</p>
     </div>
+    ${note ? `
+    <div style="background: #fff3cd; border-left: 4px solid #f5c518; border-radius: 4px; padding: 14px 18px; margin: 20px 0;">
+      <p style="margin: 0 0 6px; font-weight: bold; color: #1a6b2f;">A note from us</p>
+      <p style="margin: 0; color: #444;">${nl2br(escapeHtml(note))}</p>
+    </div>
+    ` : ''}
     <p>Please let us know if this works for you:</p>
     <div style="text-align: center; margin: 30px 0;">
       <a href="${acceptUrl}"
