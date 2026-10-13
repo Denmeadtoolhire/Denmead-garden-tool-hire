@@ -4,7 +4,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/lib/supabase';
 import type { Booking, BookingItem } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
-import { CheckCircle, Clock, AlertTriangle, X, Phone, MessageCircle, BadgeCheck, CalendarPlus } from 'lucide-react';
+import { CheckCircle, Clock, AlertTriangle, X, Phone, MessageCircle, BadgeCheck, CalendarPlus, Pencil } from 'lucide-react';
 import { sendApprovalEmail, sendAlternativeSuggestionEmail, sendHireCompleteEmail } from '@/lib/email';
 
 type BookingWithDetails = Booking & {
@@ -115,6 +115,13 @@ const ManageBookings = () => {
   const [altStartTime, setAltStartTime] = useState('08:00');
   const [altNote, setAltNote] = useState('');
   const [sendingAlt, setSendingAlt] = useState(false);
+
+  // Edit booking time modal
+  const [editBooking, setEditBooking] = useState<BookingWithDetails | null>(null);
+  const [editDate, setEditDate] = useState('');
+  const [editStartTime, setEditStartTime] = useState('08:00');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState('');
   const [altError, setAltError] = useState('');
 
   // Cancel confirm
@@ -221,6 +228,43 @@ const ManageBookings = () => {
     setClashWarning(null);
     setConfirmingApprove(null);
     setApprovingId(null);
+  };
+
+  const openEditTime = (b: BookingWithDetails) => {
+    setEditBooking(b);
+    setEditDate(format(parseISO(b.start_time), 'yyyy-MM-dd'));
+    setEditStartTime(format(parseISO(b.start_time), 'HH:mm'));
+    setEditError('');
+  };
+
+  const handleSaveEditedTime = async () => {
+    if (!editBooking || !editDate || !editStartTime) return;
+    setEditError('');
+    setSavingEdit(true);
+
+    // Keep whatever the customer booked (4 hours, 24 or 48) and move the window.
+    const duration =
+      parseISO(editBooking.end_time).getTime() - parseISO(editBooking.start_time).getTime();
+    const newStart = new Date(`${editDate}T${editStartTime}:00`);
+    const newEnd = new Date(newStart.getTime() + duration);
+
+    const { error } = await supabase
+      .from('bookings')
+      .update({ start_time: newStart.toISOString(), end_time: newEnd.toISOString() })
+      .eq('id', editBooking.id);
+
+    if (error) {
+      setEditError('Failed to save the new time. Please try again.');
+      setSavingEdit(false);
+      return;
+    }
+
+    showFlash(
+      `Time updated to ${format(newStart, 'EEE d MMM, HH:mm')} — approve to email ${editBooking.customer_name}.`
+    );
+    setEditBooking(null);
+    setSavingEdit(false);
+    await loadBookings();
   };
 
   const handleSendAlternative = async () => {
@@ -479,6 +523,73 @@ const ManageBookings = () => {
           </div>
         )}
 
+        {/* Edit booking time modal */}
+        {editBooking && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-lg">Edit Booking Time</h3>
+                <button
+                  onClick={() => { setEditBooking(null); setEditError(''); }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">
+                For <strong>{editBooking.customer_name}</strong> — {getToolNames(editBooking)}
+                <br />
+                Currently: {format(parseISO(editBooking.start_time), 'EEE d MMM yyyy, HH:mm')}
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                  <select
+                    value={editStartTime}
+                    onChange={(e) => setEditStartTime(e.target.value)}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-green"
+                  >
+                    {(TIME_OPTIONS.includes(editStartTime)
+                      ? TIME_OPTIONS
+                      : [...TIME_OPTIONS, editStartTime].sort()
+                    ).map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <p className="mt-3 text-xs text-gray-500">
+                The hire length stays the same. Nothing is emailed until you approve the booking.
+              </p>
+              {editError && <p className="mt-3 text-sm text-red-600">{editError}</p>}
+              <div className="flex gap-3 mt-5">
+                <button
+                  onClick={handleSaveEditedTime}
+                  disabled={savingEdit || !editDate || !editStartTime}
+                  className="flex-1 bg-brand-green text-white font-semibold py-2.5 rounded-lg hover:bg-brand-green-dark disabled:opacity-60"
+                >
+                  {savingEdit ? 'Saving...' : 'Save New Time'}
+                </button>
+                <button
+                  onClick={() => { setEditBooking(null); setEditError(''); }}
+                  className="px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Suggest Alternative modal */}
         {altBooking && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -627,6 +738,13 @@ const ManageBookings = () => {
                     >
                       <CheckCircle size={14} />
                       {approvingId === b.id ? 'Approving...' : 'Approve'}
+                    </button>
+                    <button
+                      onClick={() => openEditTime(b)}
+                      className="flex items-center gap-1.5 bg-gray-100 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      <Pencil size={14} />
+                      Edit Time
                     </button>
                     <button
                       onClick={() => {
