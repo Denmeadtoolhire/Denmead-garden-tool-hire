@@ -6,7 +6,7 @@ import {
   LayoutDashboard,
   Wrench,
   CalendarCheck,
-  CalendarX,
+  CalendarX, BarChart3,
   CalendarDays,
   Settings,
   LogOut,
@@ -25,6 +25,7 @@ const navItems = [
   { to: '/admin/calendar', label: 'Calendar', icon: CalendarDays },
   { to: '/admin/customers', label: 'Customers', icon: Users },
   { to: '/admin/blocked-dates', label: 'Blocked Dates', icon: CalendarX },
+  { to: '/admin/reports', label: 'Reports', icon: BarChart3 },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 

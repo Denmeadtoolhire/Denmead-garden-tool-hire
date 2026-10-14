@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import type { Booking, BookingItem } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { CheckCircle, Clock, AlertTriangle, X, Phone, MessageCircle, BadgeCheck, CalendarPlus, Pencil } from 'lucide-react';
+import { getBookingTotal } from '@/lib/bookingTotal';
 import { sendApprovalEmail, sendAlternativeSuggestionEmail, sendHireCompleteEmail } from '@/lib/email';
 
 type BookingWithDetails = Booking & {
@@ -79,20 +80,6 @@ function buildGoogleCalendarUrl(b: BookingWithDetails, toolNames: string): strin
   return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&details=${details}&location=${location}`;
 }
 
-function getBookingTotal(b: BookingWithDetails): number {
-  if (b.booking_items && b.booking_items.length > 0) {
-    return b.booking_items.reduce((sum, bi) => {
-      if (bi.price_at_booking) return sum + bi.price_at_booking;
-      const t = bi.tools;
-      if (!t) return sum;
-      return sum + (b.hire_type === '4hr' ? t.price_4hr : b.hire_type === '2day' ? t.price_2day : t.price_1day);
-    }, 0);
-  }
-  if (b.tools) {
-    return b.hire_type === '4hr' ? b.tools.price_4hr : b.hire_type === '2day' ? b.tools.price_2day : b.tools.price_1day;
-  }
-  return 0;
-}
 
 const ManageBookings = () => {
   const [searchParams] = useSearchParams();

@@ -15,6 +15,7 @@ import BookingRespondPage from './pages/BookingRespond';
 import AdminLogin from './pages/admin/AdminLogin';
 import Dashboard from './pages/admin/Dashboard';
 import ManageTools from './pages/admin/ManageTools';
+import Reports from './pages/admin/Reports';
 import ManageBookings from './pages/admin/ManageBookings';
 import SettingsPage from './pages/admin/Settings';
 import CustomersPage from './pages/admin/Customers';
@@ -131,6 +132,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ManageBookings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/reports"
+            element={
+              <ProtectedRoute>
+                <Reports />
               </ProtectedRoute>
             }
           />
