@@ -26,6 +26,7 @@ const ManageTools = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,6 +46,7 @@ const ManageTools = () => {
   const openAdd = () => {
     setEditId(null);
     setForm(emptyForm);
+    setSaveError('');
     setShowForm(true);
   };
 
@@ -61,11 +63,13 @@ const ManageTools = () => {
       price_2day: Number(tool.price_2day),
       is_available: tool.is_available,
     });
+    setSaveError('');
     setShowForm(true);
   };
 
   const handleSave = async () => {
     setSaving(true);
+    setSaveError('');
     const payload = {
       name: form.name.trim(),
       description: form.description.trim() || null,
@@ -78,10 +82,16 @@ const ManageTools = () => {
       is_available: form.is_available,
     };
 
-    if (editId) {
-      await supabase.from('tools').update(payload).eq('id', editId);
-    } else {
-      await supabase.from('tools').insert(payload);
+    const { error } = editId
+      ? await supabase.from('tools').update(payload).eq('id', editId)
+      : await supabase.from('tools').insert(payload);
+
+    // Discarding this made a rejected save look exactly like a successful one:
+    // the form closed and the tool simply never appeared.
+    if (error) {
+      setSaveError(error.message || 'Could not save this tool. Please try again.');
+      setSaving(false);
+      return;
     }
 
     await loadData();
@@ -118,7 +128,7 @@ const ManageTools = () => {
             <div className="bg-white rounded-2xl w-full max-w-lg max-h-screen overflow-y-auto shadow-xl">
               <div className="flex items-center justify-between p-5 border-b">
                 <h2 className="font-bold text-lg">{editId ? 'Edit Tool' : 'Add New Tool'}</h2>
-                <button onClick={() => setShowForm(false)}>
+                <button onClick={() => { setSaveError(''); setShowForm(false); }}>
                   <X size={20} className="text-gray-500" />
                 </button>
               </div>
@@ -239,6 +249,10 @@ const ManageTools = () => {
                 </div>
               </div>
 
+              {saveError && (
+                <p className="px-5 pb-1 text-sm text-red-600">{saveError}</p>
+              )}
+
               <div className="flex gap-3 p-5 border-t">
                 <button
                   onClick={handleSave}
@@ -249,7 +263,7 @@ const ManageTools = () => {
                   {saving ? 'Saving...' : 'Save Tool'}
                 </button>
                 <button
-                  onClick={() => setShowForm(false)}
+                  onClick={() => { setSaveError(''); setShowForm(false); }}
                   className="px-5 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel
