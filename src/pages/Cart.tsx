@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Trash2, ShoppingCart, Clock, Calendar, PlusCircle } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
-import { format, parseISO } from 'date-fns';
+import { addDays, format, parseISO } from 'date-fns';
 
 const CartPage = () => {
   const { state, dispatch } = useCart();
@@ -10,6 +10,11 @@ const CartPage = () => {
   const navigate = useNavigate();
   const initialDate = (location.state as any)?.initialDate ?? '';
   const initialTime = (location.state as any)?.initialTime ?? '';
+
+  const returnAt =
+    initialDate && initialTime && state.hireType && state.hireType !== '4hr'
+      ? addDays(parseISO(`${initialDate}T${initialTime}`), state.hireType === '2day' ? 2 : 1)
+      : null;
 
   if (state.items.length === 0) {
     return (
@@ -124,9 +129,18 @@ const CartPage = () => {
                 <p className="text-sm font-bold text-gray-900">
                   {format(parseISO(initialDate), 'EEEE d MMMM yyyy')}
                 </p>
-                <p className="text-sm text-gray-600">
-                  {state.hireType === '4hr' ? initialTime : `From ${initialTime} (${state.hireType === '2day' ? '2 days' : 'full day'})`}
-                </p>
+                {state.hireType === '4hr' ? (
+                  <p className="text-sm text-gray-600">{initialTime}</p>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-600">Collect {initialTime}</p>
+                    {returnAt && (
+                      <p className="text-sm text-gray-600">
+                        Return by {format(returnAt, 'HH:mm')} on {format(returnAt, 'EEEE d MMMM yyyy')}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             )}
 
