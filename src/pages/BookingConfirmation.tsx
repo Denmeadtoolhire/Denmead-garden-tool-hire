@@ -3,7 +3,6 @@ import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { Clock, Calendar, Mail } from 'lucide-react';
 import { supabase, type Booking, type Settings } from '@/lib/supabase';
-import { getDayOpeningTime, getDayClosingTime } from '@/lib/availability';
 import AddToHomeScreen from '@/components/AddToHomeScreen';
 
 const BookingConfirmationPage = () => {
@@ -145,13 +144,26 @@ const BookingConfirmationPage = () => {
                 <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-0.5">
                   Requested Time
                 </p>
-                <p className="font-medium text-gray-800">
-                  {booking.hire_type === '1day'
-                    ? `Full day (${getDayOpeningTime(settings, startDate)} – ${getDayClosingTime(settings, startDate)})`
-                    : `${format(startDate, 'HH:mm')} – ${format(endDate, 'HH:mm')}`}
-                </p>
+                {booking.hire_type === '4hr' ? (
+                  <p className="font-medium text-gray-800">
+                    {format(startDate, 'HH:mm')} – {format(endDate, 'HH:mm')}
+                  </p>
+                ) : (
+                  <>
+                    <p className="font-medium text-gray-800">
+                      Collect {format(startDate, 'HH:mm')}
+                    </p>
+                    <p className="font-medium text-gray-800">
+                      Return by {format(endDate, 'HH:mm')} on {format(endDate, 'EEEE d MMMM yyyy')}
+                    </p>
+                  </>
+                )}
                 <p className="text-sm text-gray-500">
-                  {booking.hire_type === '4hr' ? '4 Hour hire' : 'Full day hire'}
+                  {booking.hire_type === '4hr'
+                    ? '4 Hour hire'
+                    : booking.hire_type === '2day'
+                      ? '2 Day hire'
+                      : 'Full day hire'}
                 </p>
               </div>
             </div>

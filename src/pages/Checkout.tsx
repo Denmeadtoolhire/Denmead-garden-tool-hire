@@ -611,9 +611,17 @@ const CheckoutPage = () => {
               {isSubmitting ? 'Creating Booking...' : 'Send Booking Request'}
             </button>
 
-            <p className="text-center text-sm text-gray-600 mt-4">
-              Your booking request will be reviewed and a confirmation email will be sent to confirm your booking.
-            </p>
+            <div className="mt-4 rounded-xl bg-gray-50 border border-gray-200 p-4 text-sm text-gray-700">
+              <p className="font-semibold text-gray-900">What happens next</p>
+              <p className="mt-1">
+                This is a request, not a confirmed booking. We review every request personally
+                and you'll get a confirmation email very soon.
+              </p>
+              <p className="mt-2">
+                If nothing arrives in your inbox, please check your spam or junk folder — and
+                mark it as "not spam" so you get your reminder the day before.
+              </p>
+            </div>
           </div>
         </div>
       )}
