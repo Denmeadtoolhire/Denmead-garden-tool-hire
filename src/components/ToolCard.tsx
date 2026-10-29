@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import type { Tool, Settings } from '@/lib/supabase';
 import BookingCalendar from '@/components/BookingCalendar';
-import { getAvailableSlotsFor4hr, getDayOpeningTime, setTimeOnDate } from '@/lib/availability';
+import { getAvailableSlotsFor4hr, getFullDaySlotsForMultiTools } from '@/lib/availability';
 
 interface ToolCardProps {
   tool: Tool;
@@ -24,29 +24,20 @@ const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
 
   const handleDatePicked = async (date: Date) => {
     if (!settings || !calHireType) return;
-    if (calHireType === '1day' || calHireType === '2day') {
-      // Full day / 2 day — no time slot selection needed, proceed immediately
-      const openTime = getDayOpeningTime(settings, date);
-      const openDate = setTimeOnDate(date, openTime);
-      const initialTime = format(openDate, 'HH:mm');
-      dispatch({ type: 'SET_HIRE_TYPE', hireType: calHireType });
-      dispatch({ type: 'ADD_ITEM', tool });
-      setShowAvailability(false);
-      navigate('/booking/cart', { state: { initialDate: format(date, 'yyyy-MM-dd'), initialTime } });
-    } else {
-      // 4hr — load time slots for this date
-      setPickedDate(date);
-      setLoadingSlots(true);
-      const slots = await getAvailableSlotsFor4hr(tool.id, date, settings);
-      setTimeSlots(slots);
-      setLoadingSlots(false);
-    }
+    setPickedDate(date);
+    setLoadingSlots(true);
+    const slots =
+      calHireType === '1day' || calHireType === '2day'
+        ? await getFullDaySlotsForMultiTools([tool.id], date, settings, calHireType === '2day' ? 2 : 1)
+        : await getAvailableSlotsFor4hr(tool.id, date, settings);
+    setTimeSlots(slots);
+    setLoadingSlots(false);
   };
 
   const handleTimeSlotPicked = (slot: { start: Date }) => {
     if (!pickedDate || !calHireType) return;
     const initialTime = format(slot.start, 'HH:mm');
-    dispatch({ type: 'SET_HIRE_TYPE', hireType: '4hr' });
+    dispatch({ type: 'SET_HIRE_TYPE', hireType: calHireType });
     dispatch({ type: 'ADD_ITEM', tool });
     setShowAvailability(false);
     navigate('/booking/cart', { state: { initialDate: format(pickedDate, 'yyyy-MM-dd'), initialTime } });
@@ -196,10 +187,12 @@ const ToolCard = ({ tool, categoryName, settings }: ToolCardProps) => {
               </>
             )}
 
-            {/* Step 3: Time slots (4hr only) */}
-            {calHireType === '4hr' && pickedDate && (
+            {/* Step 3: Time slots */}
+            {calHireType && pickedDate && (
               <>
-                <p className="text-xs font-semibold text-gray-500 mb-1">Step 3 — Pick a time slot</p>
+                <p className="text-xs font-semibold text-gray-500 mb-1">
+                  Step 3 — {calHireType === '4hr' ? 'Pick a time slot' : 'Pick a collection time'}
+                </p>
                 <p className="text-xs text-gray-400 mb-3">
                   {format(pickedDate, 'EEEE d MMMM')} —{' '}
                   <button onClick={() => { setPickedDate(null); setTimeSlots([]); }} className="text-brand-green underline">
