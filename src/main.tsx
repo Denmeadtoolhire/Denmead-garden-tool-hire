@@ -31,6 +31,19 @@ function ScrollToTop() {
   return null;
 }
 
+// index.html is served for every route, so its canonical tag would otherwise
+// tell Google that /tools is just an alternative view of the home page.
+function CanonicalUrl() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const link = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!link) return;
+    const path = pathname === '/' ? '/' : pathname.replace(/\/+$/, '');
+    link.href = `https://www.denmeadtoolhire.co.uk${path}`;
+  }, [pathname]);
+  return null;
+}
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAdmin();
   if (!isAuthenticated) return <Navigate to="/admin" replace />;
@@ -53,6 +66,7 @@ function App() {
       <AdminProvider>
         <CartProvider>
           <ScrollToTop />
+          <CanonicalUrl />
           <Routes>
             <Route
               path="/"
