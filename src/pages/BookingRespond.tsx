@@ -197,7 +197,7 @@ const BookingRespondPage = () => {
             <div className="bg-gray-50 rounded-xl p-4 mb-6 text-left text-sm text-gray-700">
               <p><strong>Ref:</strong> {booking.id.substring(0, 8).toUpperCase()}</p>
               <p><strong>Date:</strong> {format(startDate, 'EEEE d MMMM yyyy')}</p>
-              <p><strong>Hire type:</strong> {booking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}</p>
+              <p><strong>Hire type:</strong> {booking.hire_type === '4hr' ? '4 Hours' : booking.hire_type === '2day' ? '2 Days' : 'Full Day'}</p>
             </div>
             <div className="flex gap-3">
               <button
@@ -323,7 +323,7 @@ const BookingRespondPage = () => {
               <div className="flex justify-between">
                 <span>Hire type:</span>
                 <span className="font-medium text-gray-900">
-                  {booking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}
+                  {booking.hire_type === '4hr' ? '4 Hours' : booking.hire_type === '2day' ? '2 Days' : 'Full Day'}
                 </span>
               </div>
             </div>

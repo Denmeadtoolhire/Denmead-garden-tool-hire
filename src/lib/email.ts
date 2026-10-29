@@ -76,11 +76,18 @@ function formatDateTime(startIso: string, endIso: string, hireType: '4hr' | '1da
   const start = parseISO(startIso);
   const end = parseISO(endIso);
   const dateStr = format(start, 'EEEE d MMMM yyyy');
-  if (hireType === '2day') {
-    return `${dateStr} – ${format(end, 'EEEE d MMMM yyyy')} (2 days), collect from ${format(start, 'HH:mm')}`;
+  // Day hires run 24 or 48 hours from the chosen collection time, so naming
+  // only the clock times would read as "17:00 – 17:00" on a single date.
+  if (hireType === '1day' || hireType === '2day') {
+    return `${dateStr} — collect ${format(start, 'HH:mm')}, return by ${format(end, 'HH:mm')} on ${format(end, 'EEEE d MMMM yyyy')}`;
   }
-  const timeStr = `${format(start, 'HH:mm')} – ${format(end, 'HH:mm')}`;
-  return `${dateStr}, ${timeStr}`;
+  return `${dateStr}, ${format(start, 'HH:mm')} – ${format(end, 'HH:mm')}`;
+}
+
+function hireTypeLabel(hireType: '4hr' | '1day' | '2day'): string {
+  if (hireType === '4hr') return '4 Hours';
+  if (hireType === '2day') return '2 Days (48 hours)';
+  return 'Full Day (24 hours)';
 }
 
 function baseHeader(title: string): string {
@@ -119,7 +126,7 @@ function bookingTable(booking: Booking, toolNames: string[]): string {
       <table style="width: 100%; border-collapse: collapse;">
         <tr><td style="padding: 8px 0; color: #666; width: 35%; vertical-align: top;">${toolLabel}:</td><td style="padding: 8px 0;">${toolValue}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Date &amp; Time:</td><td style="padding: 8px 0;">${dateTime}</td></tr>
-        <tr><td style="padding: 8px 0; color: #666;">Hire type:</td><td style="padding: 8px 0;">${booking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666;">Hire type:</td><td style="padding: 8px 0;">${hireTypeLabel(booking.hire_type)}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Reference:</td><td style="padding: 8px 0; font-family: monospace;">${booking.id.substring(0, 8).toUpperCase()}</td></tr>
       </table>
     </div>
@@ -318,7 +325,7 @@ export async function sendAlternativeSuggestionEmail(
     <p>Our suggested alternative:</p>
     <div style="background: white; border: 2px solid #1a6b2f; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
       <p style="font-size: 18px; font-weight: bold; color: #1a6b2f; margin: 0;">${suggestedDateTime}</p>
-      <p style="color: #666; margin: 8px 0 0;">${booking.hire_type === '4hr' ? '4 Hour hire' : 'Full Day hire'} — ${toolDisplay}</p>
+      <p style="color: #666; margin: 8px 0 0;">${hireTypeLabel(booking.hire_type)} hire — ${toolDisplay}</p>
     </div>
     ${note ? `
     <div style="background: #fff3cd; border-left: 4px solid #f5c518; border-radius: 4px; padding: 14px 18px; margin: 20px 0;">
@@ -372,7 +379,7 @@ export async function sendAdminNewRequestEmail(booking: Booking, toolNames: stri
       <table style="width: 100%; border-collapse: collapse;">
         <tr><td style="padding: 8px 0; color: #666; width: 35%; vertical-align: top;">${toolLabel}:</td><td style="padding: 8px 0;">${toolValue}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Date &amp; Time:</td><td style="padding: 8px 0;">${dateTime}</td></tr>
-        <tr><td style="padding: 8px 0; color: #666;">Hire type:</td><td style="padding: 8px 0;">${booking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666;">Hire type:</td><td style="padding: 8px 0;">${hireTypeLabel(booking.hire_type)}</td></tr>
         <tr><td style="padding: 8px 0; color: #666;">Reference:</td><td style="padding: 8px 0; font-family: monospace;">${booking.id.substring(0, 8).toUpperCase()}</td></tr>
       </table>
       <hr style="border: none; border-top: 1px solid #eee; margin: 16px 0;">
@@ -429,7 +436,7 @@ export async function sendAdminCancellationEmail(booking: Booking, toolNames: st
         <tr><td style="padding: 8px 0; color: #666; width: 35%;">Reference:</td><td style="padding: 8px 0; font-family: monospace;">${booking.id.substring(0, 8).toUpperCase()}</td></tr>
         ${toolNames.length > 0 ? `<tr><td style="padding: 8px 0; color: #666; vertical-align: top;">${toolLabel}:</td><td style="padding: 8px 0;">${toolValue}</td></tr>` : ''}
         <tr><td style="padding: 8px 0; color: #666;">Date &amp; Time:</td><td style="padding: 8px 0;">${dateTime}</td></tr>
-        <tr><td style="padding: 8px 0; color: #666;">Hire type:</td><td style="padding: 8px 0;">${booking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}</td></tr>
+        <tr><td style="padding: 8px 0; color: #666;">Hire type:</td><td style="padding: 8px 0;">${hireTypeLabel(booking.hire_type)}</td></tr>
       </table>
       <hr style="border: none; border-top: 1px solid #eee; margin: 16px 0;">
       <h3 style="color: #1a6b2f; margin-top: 0;">Customer</h3>

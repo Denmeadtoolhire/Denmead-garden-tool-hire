@@ -280,7 +280,7 @@ const CustomersPage = () => {
                                 <p className="font-medium text-gray-800">{booking.tools?.name}</p>
                                 <p className="text-gray-600 text-xs mt-1">
                                   {format(parseISO(booking.start_time), 'dd MMM yyyy')} •{' '}
-                                  {booking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}
+                                  {booking.hire_type === '4hr' ? '4 Hours' : booking.hire_type === '2day' ? '2 Days' : 'Full Day'}
                                 </p>
                               </div>
                               <span

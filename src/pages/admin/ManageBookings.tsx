@@ -593,7 +593,7 @@ const ManageBookings = () => {
               <p className="text-sm text-gray-600 mb-4">
                 For <strong>{altBooking.customer_name}</strong> — {getToolNames(altBooking)}
                 <br />
-                Hire type: <strong>{altBooking.hire_type === '4hr' ? '4 Hours' : 'Full Day'}</strong>
+                Hire type: <strong>{altBooking.hire_type === '4hr' ? '4 Hours' : altBooking.hire_type === '2day' ? '2 Days' : 'Full Day'}</strong>
               </p>
               <div className="space-y-4">
                 <div>
