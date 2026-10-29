@@ -88,13 +88,19 @@ const CheckoutPage = () => {
         const date = new Date(selectedDate);
         const toolIds = cartState.items.map((item) => item.tool.id);
 
-        if (hireType === '1day' || hireType === '2day') {
-          const slots = await getFullDaySlotsForMultiTools(toolIds, date, settings, hireType === '2day' ? 2 : 1);
-          setAvailableSlots(slots);
-        } else {
-          const slots = await getAvailableSlotsForMultiTools(toolIds, date, settings);
-          setAvailableSlots(slots);
-        }
+        const slots =
+          hireType === '1day' || hireType === '2day'
+            ? await getFullDaySlotsForMultiTools(toolIds, date, settings, hireType === '2day' ? 2 : 1)
+            : await getAvailableSlotsForMultiTools(toolIds, date, settings);
+        setAvailableSlots(slots);
+
+        // A time carried in from the tool card may not survive the change of
+        // date or hire type, and must not be submittable once it is gone.
+        const startLabel = (d: Date) =>
+          `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        setSelectedTime((current) =>
+          slots.some((s) => s.available && startLabel(s.start) === current) ? current : ''
+        );
       } catch (error) {
         console.error('Error fetching availability:', error);
         setAvailableSlots([]);

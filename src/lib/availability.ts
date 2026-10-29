@@ -54,6 +54,21 @@ export function isDateAvailableForBooking(date: Date, settings: Settings): boole
   return true;
 }
 
+// Day hires are collected at one of a few set times rather than any hour, so
+// the customer picks a slot that suits us to hand over and take back.
+export function getDayHireCollectionTimes(settings: Settings, date: Date): string[] {
+  const { hours: openH, minutes: openM } = parseTime(getDayOpeningTime(settings, date));
+  const { hours: closeH, minutes: closeM } = parseTime(getDayClosingTime(settings, date));
+  const openMinutes = openH * 60 + openM;
+  const closeMinutes = closeH * 60 + closeM;
+
+  return [openMinutes, 12 * 60, 17 * 60]
+    .filter((t, i, all) => all.indexOf(t) === i)
+    .filter((t) => t >= openMinutes && t < closeMinutes)
+    .sort((a, b) => a - b)
+    .map((t) => `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`);
+}
+
 export async function getAvailableSlotsFor4hr(
   toolId: string,
   date: Date,
@@ -126,9 +141,12 @@ export async function isFullDayAvailable(
   const open = setTimeOnDate(date, getDayOpeningTime(settings, date));
   const close = setTimeOnDate(date, getDayClosingTime(settings, date));
 
-  // Same min-notice check as 4hr slots — if opening time is too soon, not available
+  // Judging the whole day by its opening time wrote off today the moment we
+  // opened; the day is still bookable while any later collection time stands.
   const minStart = addHours(new Date(), settings.min_notice_hours);
-  if (isBefore(open, minStart)) return false;
+  const collectionTimes = getDayHireCollectionTimes(settings, date).map((t) => setTimeOnDate(date, t));
+  if (collectionTimes.length === 0) return false;
+  if (collectionTimes.every((t) => isBefore(t, minStart))) return false;
 
   const [{ data: tool }, { data: blockedPeriods }, { data: legacyBookings }, { data: itemBookings }] = await Promise.all([
     supabase.from('tools').select('quantity').eq('id', toolId).single(),
@@ -230,11 +248,7 @@ export async function getFullDaySlotsForMultiTools(
 ): Promise<Array<{ start: Date; end: Date; label: string; available: boolean }>> {
   if (toolIds.length === 0) return [];
 
-  const openTime = getDayOpeningTime(settings, date);
-  const closeTime = getDayClosingTime(settings, date);
-  const { hours: openH, minutes: openM } = parseTime(openTime);
-  const { hours: closeH, minutes: closeM } = parseTime(closeTime);
-
+  const collectionTimes = getDayHireCollectionTimes(settings, date);
   const minStart = addHours(new Date(), settings.min_notice_hours ?? 0);
   const periodEnd = addDays(date, durationDays);
 
@@ -270,18 +284,8 @@ export async function getFullDaySlotsForMultiTools(
   const blockedPeriods = blockedResult.data ?? [];
   const turnaround = settings.turnaround_minutes ?? 30;
 
-  // Day hires are collected at one of a few set times rather than any hour, so
-  // the customer picks a slot that suits us to hand over and take back.
-  const openMinutes = openH * 60 + openM;
-  const closeMinutes = closeH * 60 + closeM;
-  const candidates = [openMinutes, 12 * 60, 17 * 60]
-    .filter((t, i, all) => all.indexOf(t) === i)
-    .filter((t) => t >= openMinutes && t < closeMinutes)
-    .sort((a, b) => a - b);
-
   const slots: Array<{ start: Date; end: Date; label: string; available: boolean }> = [];
-  for (const minutesIntoDay of candidates) {
-    const label = `${String(Math.floor(minutesIntoDay / 60)).padStart(2, '0')}:${String(minutesIntoDay % 60).padStart(2, '0')}`;
+  for (const label of collectionTimes) {
     const slotStart = setTimeOnDate(date, label);
     const slotEnd = addDays(slotStart, durationDays);
 
