@@ -4,7 +4,7 @@ import { supabase, type Booking, type Settings } from '@/lib/supabase';
 import { useCart } from '@/contexts/CartContext';
 import { getAvailableSlotsForMultiTools, getFullDaySlotsForMultiTools } from '@/lib/availability';
 import { sendRequestReceivedEmail, sendAdminNewRequestEmail } from '@/lib/email';
-import { format, parseISO } from 'date-fns';
+import { addDays, addHours, format, parseISO } from 'date-fns';
 import { ChevronLeft, AlertCircle, X } from 'lucide-react';
 
 const TERMS_AND_CONDITIONS = `Denmead Tool and Garden Hire Ltd - Terms and Conditions
@@ -53,6 +53,14 @@ const CheckoutPage = () => {
   );
   const [selectedDate, setSelectedDate] = useState<string>(initialDate);
   const [selectedTime, setSelectedTime] = useState<string>(initialTime);
+
+  const collectionAt =
+    selectedDate && selectedTime ? parseISO(`${selectedDate}T${selectedTime}`) : null;
+  const returnAt = !collectionAt
+    ? null
+    : hireType === '4hr'
+      ? addHours(collectionAt, 4)
+      : addDays(collectionAt, hireType === '2day' ? 2 : 1);
   const [customerData, setCustomerData] = useState({
     name: '',
     email: '',
@@ -538,11 +546,19 @@ const CheckoutPage = () => {
                 </span>
               </div>
               <div>
-                <span className="text-gray-600">Date & Time:</span>
+                <span className="text-gray-600">Collect:</span>
                 <span className="font-semibold text-gray-900 ml-2">
-                  {format(parseISO(selectedDate), 'dd/MM/yyyy')} at {selectedTime}
+                  {format(parseISO(selectedDate), 'EEEE d MMMM yyyy')} at {selectedTime}
                 </span>
               </div>
+              {returnAt && (
+                <div>
+                  <span className="text-gray-600">Return by:</span>
+                  <span className="font-semibold text-gray-900 ml-2">
+                    {format(returnAt, 'EEEE d MMMM yyyy')} at {format(returnAt, 'HH:mm')}
+                  </span>
+                </div>
+              )}
               <div>
                 <span className="text-gray-600">Name:</span>
                 <span className="font-semibold text-gray-900 ml-2">{customerData.name}</span>
@@ -554,9 +570,17 @@ const CheckoutPage = () => {
             </div>
 
             {/* Total */}
-            <div className="mb-6 flex justify-between text-lg font-bold">
-              <span>Total: <span className="text-sm font-normal text-gray-500">(Payment at pickup)</span></span>
+            <div className="mb-4 flex justify-between text-lg font-bold">
+              <span>Total:</span>
               <span className="text-brand-green">£{cartTotal.toFixed(2)}</span>
+            </div>
+
+            <div className="mb-6 rounded-xl border border-brand-green/30 bg-green-50 p-4">
+              <p className="font-bold text-brand-green">Nothing to pay now</p>
+              <p className="mt-1 text-sm text-gray-700">
+                Pay when you collect — <strong>cash or card</strong> both accepted.
+                Cash is preferred if that suits you.
+              </p>
             </div>
 
             {/* T&Cs checkbox */}
