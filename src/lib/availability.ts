@@ -270,12 +270,20 @@ export async function getFullDaySlotsForMultiTools(
   const blockedPeriods = blockedResult.data ?? [];
   const turnaround = settings.turnaround_minutes ?? 30;
 
+  // Day hires are collected at one of a few set times rather than any hour, so
+  // the customer picks a slot that suits us to hand over and take back.
+  const openMinutes = openH * 60 + openM;
+  const closeMinutes = closeH * 60 + closeM;
+  const candidates = [openMinutes, 12 * 60, 17 * 60]
+    .filter((t, i, all) => all.indexOf(t) === i)
+    .filter((t) => t >= openMinutes && t < closeMinutes)
+    .sort((a, b) => a - b);
+
   const slots: Array<{ start: Date; end: Date; label: string; available: boolean }> = [];
-  let h = openH, m = openM;
-  while (h < closeH || (h === closeH && m < closeM)) {
-    const slotStart = setTimeOnDate(date, `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+  for (const minutesIntoDay of candidates) {
+    const label = `${String(Math.floor(minutesIntoDay / 60)).padStart(2, '0')}:${String(minutesIntoDay % 60).padStart(2, '0')}`;
+    const slotStart = setTimeOnDate(date, label);
     const slotEnd = addDays(slotStart, durationDays);
-    const label = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 
     let available = slotStart >= minStart;
 
@@ -299,7 +307,6 @@ export async function getFullDaySlotsForMultiTools(
     }
 
     slots.push({ start: slotStart, end: slotEnd, label, available });
-    h++;
   }
   return slots;
 }
