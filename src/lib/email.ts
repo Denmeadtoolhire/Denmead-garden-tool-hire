@@ -358,6 +358,39 @@ export async function sendAlternativeSuggestionEmail(
 /**
  * Email 4: Sent to admin when a new booking request comes in.
  */
+/**
+ * Sent to the customer when an already-approved booking is moved to a new time.
+ */
+export async function sendBookingTimeChangedEmail(
+  booking: Booking,
+  toolNames: string[],
+  previousStart: string,
+  previousEnd: string
+): Promise<void> {
+  const html = `
+    ${baseHeader('Your Booking Time Has Changed')}
+    <p>Hi ${booking.customer_name},</p>
+    <p>As agreed, we have moved your tool hire to a new time. Everything else about your booking stays the same.</p>
+
+    <div style="background: #fff3cd; border-left: 4px solid #f5c518; border-radius: 4px; padding: 14px 18px; margin: 20px 0;">
+      <p style="margin: 0 0 4px; color: #666; font-size: 14px;">Previously booked for</p>
+      <p style="margin: 0; color: #888; text-decoration: line-through;">${formatDateTime(previousStart, previousEnd, booking.hire_type)}</p>
+    </div>
+
+    ${bookingTable(booking, toolNames)}
+
+    <p>Please collect from <strong>${PICKUP_ADDRESS}</strong>. Payment is on collection &mdash; cash or card.</p>
+    <p style="color: #666; font-size: 13px;">If this new time doesn't suit you after all, call us on <strong>${PHONE}</strong>.</p>
+    ${baseFooter()}
+  `;
+
+  await sendEmail({
+    to: [booking.customer_email],
+    subject: `Booking Time Changed - ${booking.id.substring(0, 8).toUpperCase()} - Denmead Tool Hire`,
+    html,
+  });
+}
+
 export async function sendAdminNewRequestEmail(booking: Booking, toolNames: string[]): Promise<void> {
 
   const dateTime = formatDateTime(booking.start_time, booking.end_time, booking.hire_type);

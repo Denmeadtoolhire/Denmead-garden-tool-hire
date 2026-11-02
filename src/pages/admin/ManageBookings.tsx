@@ -6,7 +6,7 @@ import type { Booking, BookingItem } from '@/lib/supabase';
 import { format, parseISO } from 'date-fns';
 import { CheckCircle, Clock, AlertTriangle, X, Phone, MessageCircle, BadgeCheck, CalendarPlus, Pencil } from 'lucide-react';
 import { getBookingTotal } from '@/lib/bookingTotal';
-import { sendApprovalEmail, sendAlternativeSuggestionEmail, sendHireCompleteEmail } from '@/lib/email';
+import { sendApprovalEmail, sendAlternativeSuggestionEmail, sendHireCompleteEmail, sendBookingTimeChangedEmail } from '@/lib/email';
 
 type BookingWithDetails = Booking & {
   tools?: { name: string; price_4hr: number; price_1day: number; price_2day: number } | null;
@@ -246,9 +246,29 @@ const ManageBookings = () => {
       return;
     }
 
-    showFlash(
-      `Time updated to ${format(newStart, 'EEE d MMM, HH:mm')} — approve to email ${editBooking.customer_name}.`
-    );
+    // A pending booking is emailed when it gets approved; an approved one has
+    // already been confirmed, so the customer must be told about the move now.
+    if (editBooking.status === 'approved') {
+      const names =
+        editBooking.booking_items && editBooking.booking_items.length > 0
+          ? editBooking.booking_items.map((bi) => bi.tools?.name ?? 'Unknown')
+          : editBooking.tools
+            ? [editBooking.tools.name]
+            : [];
+      sendBookingTimeChangedEmail(
+        { ...editBooking, start_time: newStart.toISOString(), end_time: newEnd.toISOString() },
+        names,
+        editBooking.start_time,
+        editBooking.end_time
+      ).catch(console.error);
+      showFlash(
+        `Moved to ${format(newStart, 'EEE d MMM, HH:mm')} — ${editBooking.customer_name} has been emailed.`
+      );
+    } else {
+      showFlash(
+        `Time updated to ${format(newStart, 'EEE d MMM, HH:mm')} — approve to email ${editBooking.customer_name}.`
+      );
+    }
     setEditBooking(null);
     setSavingEdit(false);
     await loadBookings();
@@ -555,7 +575,10 @@ const ManageBookings = () => {
                 </div>
               </div>
               <p className="mt-3 text-xs text-gray-500">
-                The hire length stays the same. Nothing is emailed until you approve the booking.
+                The hire length stays the same.{' '}
+                {editBooking.status === 'approved'
+                  ? `${editBooking.customer_name} will be emailed about the new time.`
+                  : 'Nothing is emailed until you approve the booking.'}
               </p>
               {editError && <p className="mt-3 text-sm text-red-600">{editError}</p>}
               <div className="flex gap-3 mt-5">
@@ -856,8 +879,15 @@ const ManageBookings = () => {
                     {b.status === 'approved' && (
                       <>
                         <button
+                          onClick={() => openEditTime(b)}
+                          className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+                        >
+                          <Pencil size={14} />
+                          Change Time
+                        </button>
+                        <button
                           onClick={() => handleMarkPaid(b.id, !b.paid)}
-                          className={`ml-auto inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors ${
+                          className={`inline-flex items-center gap-1.5 text-sm font-semibold px-4 py-1.5 rounded-lg transition-colors ${
                             b.paid
                               ? 'bg-blue-600 text-white hover:bg-blue-700'
                               : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
